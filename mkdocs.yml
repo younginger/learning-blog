@@ -1,22 +1,49 @@
 site_name: younginger 的摸鱼手册
+site_url: https://younginger.github.io/learning-blog/
+repo_url: https://github.com/younginger/learning-blog
+repo_name: GitHub
+
 theme:
   name: material
   features:
-    - navigation.tabs # 开启顶部导航栏
-    - content.code.copy # 代码块右上角显示“复制”按钮
+    - navigation.tabs        # 顶部导航栏
+    - navigation.sections    # 侧边栏分组
+    - toc.integrate          # 目录集成在侧边栏
+    - content.code.copy      # 代码复制按钮
+  # 🎨 视觉配色：添加深色模式切换按钮
+  palette: 
+    - scheme: default
+      primary: teal          # 主题色：青色
+      accent: purple         # 强调色：紫色
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate          # 深色模式
+      primary: teal
+      accent: lime
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
 
-# 必要的插件和扩展
+# 🗺️ 导航结构（这是新增的核心部分）
+nav:
+  - 首页: index.md
+  - 学习笔记:
+      - 扩散模型: diffusion-study.md
+      - 医学图像: medical-ai.md  # 占位，稍后创建
+  - 关于我: about.md             # 占位，稍后创建
+
+# 插件配置（保持不变）
 markdown_extensions:
-  - admonition #以此开启提示框功能
-  - pymdownx.highlight: # 代码高亮
+  - admonition
+  - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
-  - pymdownx.arithmatex: # 开启数学公式支持
+  - pymdownx.arithmatex:
       generic: true
 
-# 加载 MathJax (渲染数学公式的引擎)
 extra_javascript:
   - javascripts/mathjax.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
