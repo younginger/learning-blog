@@ -2,7 +2,10 @@ site_name: younginger 的摸鱼手册
 site_url: https://younginger.github.io/learning-blog/
 repo_url: https://github.com/younginger/learning-blog
 repo_name: GitHub
-
+# 引入 Google 字体 (Orbitron 是一个很经典的科幻字体)
+extra_css:
+  - https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap
+  - stylesheets/extra.css  # 我们即将创建的自定义样式表
 theme:
   name: material
   custom_dir: overrides

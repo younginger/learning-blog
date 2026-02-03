@@ -1,0 +1,134 @@
+/* --- 定义科幻主题色变量 --- */
+:root {
+  --neon-cyan: #00fff2;
+  --neon-purple: #bc13fe;
+  --bg-dark: #0a0a12; /* 比默认深色模式更黑的背景 */
+}
+
+/* --- 全局科幻字体应用 --- */
+/* 仅在深色模式下生效，避免破坏浅色模式体验 */
+[data-md-color-scheme="slate"] h1,
+[data-md-color-scheme="slate"] .scifi-font {
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase; /* 大写看起来更有气势 */
+    letter-spacing: 2px;
+}
+
+/* --- 首页 Hero 区域样式 --- */
+.scifi-hero {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 0 20px var(--neon-cyan), inset 0 0 20px var(--neon-cyan);
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 模拟扫描线效果 */
+.scifi-hero::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(transparent 0px, transparent 2px, rgba(0, 255, 242, 0.1) 3px);
+    pointer-events: none;
+}
+
+.scifi-hero h1 {
+    font-size: 2.5rem;
+    /* 文字霓虹光晕效果 */
+    text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.scifi-hero p {
+    font-size: 1.2rem;
+    color: var(--neon-cyan);
+    opacity: 0.8;
+}
+
+/* --- 导航卡片网格布局 --- */
+.scifi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+/* 卡片样式 */
+.scifi-card {
+    display: block;
+    padding: 2rem;
+    background: rgba(20, 20, 30, 0.8);
+    border: 1px solid var(--neon-purple);
+    text-decoration: none; /* 去掉链接下划线 */
+    color: white !important;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 鼠标悬停时的发光效果 */
+.scifi-card:hover {
+    box-shadow: 0 0 25px var(--neon-purple);
+    transform: translateY(-5px); /* 轻微上浮 */
+    background: rgba(188, 19, 254, 0.1);
+}
+
+/* 卡片标题 */
+.scifi-card h3 {
+    margin-top: 0;
+    color: var(--neon-purple);
+    font-family: 'Orbitron', sans-serif;
+}
+
+/* 卡片角落装饰 (可选) */
+.scifi-card::after {
+    content: "";
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 20px; height: 20px;
+    border-bottom: 3px solid var(--neon-cyan);
+    border-right: 3px solid var(--neon-cyan);
+}
+
+/* --- 纯 CSS 图片轮播 (Fade Effect) --- */
+.carousel-container {
+    position: relative;
+    width: 100%;
+    height: 300px; /* 根据你的图片高度调整 */
+    overflow: hidden;
+    border: 1px solid var(--neon-cyan);
+    box-shadow: 0 0 15px rgba(0, 255, 242, 0.3);
+    margin: 2rem 0;
+    background: #000;
+}
+
+.carousel-slide {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0;
+    animation: carousel-fade 12s infinite; /* 12s 是总循环时间，取决于图片数量 */
+}
+
+.carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 保证图片填满且不变形 */
+}
+
+/* 定义动画关键帧：根据图片数量调整百分比 */
+/* 这里假设有 3 张图片 */
+.carousel-slide:nth-child(1) { animation-delay: 0s; }
+.carousel-slide:nth-child(2) { animation-delay: 4s; } /* 12s / 3张 = 4s 间隔 */
+.carousel-slide:nth-child(3) { animation-delay: 8s; }
+
+@keyframes carousel-fade {
+    0% { opacity: 0; z-index: 1;}
+    10% { opacity: 1; z-index: 2;}  /* 淡入耗时 10% */
+    33% { opacity: 1; z-index: 2;}  /* 保持显示到 33% */
+    43% { opacity: 0; z-index: 1;}  /* 淡出耗时 10% */
+    100% { opacity: 0; z-index: 1;}
+}
