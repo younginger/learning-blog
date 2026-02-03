@@ -5,6 +5,7 @@ repo_name: GitHub
 
 theme:
   name: material
+  custom_dir: overrides
   features:
     - navigation.tabs        # 顶部导航栏
     - navigation.sections    # 侧边栏分组
@@ -31,6 +32,9 @@ nav:
   - 学习笔记:
       - 扩散模型: diffusion-study.md
       - 医学图像: medical-ai.md  # 占位，稍后创建
+  - 生活瞬间:                    # <--- 新增的分区
+      - 热爱当下: photography.md
+      - 第九艺术: hobbies.md
   - 关于我: about.md             # 占位，稍后创建
 
 # 插件配置（保持不变）
@@ -43,7 +47,9 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.arithmatex:
       generic: true
-
+plugins:
+  - search    # 开启搜索功能
+  - glightbox # 开启图片灯箱效果
 extra_javascript:
   - javascripts/mathjax.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
