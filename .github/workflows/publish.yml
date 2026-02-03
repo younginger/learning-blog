@@ -2,9 +2,8 @@ name: publish site
 on:
   push:
     branches:
-      - master 
+      - master
       - main
-      # 上面这两行确保无论你的主分支叫 master 还是 main 都能触发
 
 permissions:
   contents: write
@@ -25,4 +24,5 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - run: pip install mkdocs-material 
+      - run: pip install mkdocs-glightbox  # <--- 关键修复点
       - run: mkdocs gh-deploy --force
