@@ -132,3 +132,23 @@
     43% { opacity: 0; z-index: 1;}  /* 淡出耗时 10% */
     100% { opacity: 0; z-index: 1;}
 }
+
+/* --- 全局背景图设置 （有问题）--- */
+/* 仅在深色模式（科幻模式）下生效 */
+[data-md-color-scheme="slate"] body {
+    /* 1. 设置背景图路径 (注意 ../ 是返回上一级目录) */
+    background-image: url('../assets/images/bg.jpg'); 
+
+    /* 2. 让背景图铺满屏幕且不重复 */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+
+    /* 3. 【关键】固定背景，滚动网页时背景不动 */
+    background-attachment: fixed;
+
+    /* 4. 增加一层半透明遮罩，防止背景太花看不清文字 */
+    /* 这行代码会让图片和原本的深色背景混合，变暗一点 */
+    background-blend-mode: multiply; 
+}
+
