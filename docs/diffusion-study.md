@@ -57,17 +57,399 @@ KL散度是图像生成模型常用的损失函数，回到最初的问题，我
 
 ## 2. 代码实现
 
-这是我在 PyTorch 中的实现代码：
+第一次示例：
 
 ```python
+# dataset.py
 import torch
+import torchvision
+from torchvision import transforms
+from torch.utils.data import DataLoader
 
-def q_sample(x_0, t, noise=None):
-    if noise is None:
-        noise = torch.randn_like(x_0)
+def get_dataloader(batch_size=64, img_size=32):
+    """
+    加载 FashionMNIST 并进行预处理：
+    1. Resize 到 32x32 (适应 UNet 结构)
+    2. 转为 Tensor
+    3. 归一化到 [-1, 1] (Diffusion 必须!)
+    """
     
-    sqrt_alphas_cumprod_t = extract(sqrt_alphas_cumprod, t, x_0.shape)
-    sqrt_one_minus_alphas_cumprod_t = extract(sqrt_one_minus_alphas_cumprod, t, x_0.shape)
+    tf = transforms.Compose([
+        transforms.Resize((img_size, img_size)), # 1. 放大图片到 32x32
+        transforms.ToTensor(),                   # 2. 变成 Tensor，范围变 [0, 1]
+        transforms.Normalize((0.5,), (0.5,))     # 3. (x - 0.5) / 0.5 -> 范围变 [-1, 1]
+    ])
+
+    # 直接使用官方数据集，把 transform 传进去
+    dataset = torchvision.datasets.FashionMNIST(
+        root="./data", 
+        train=True, 
+        download=True, 
+        transform=tf  
+    )
+
+    # 封装成 DataLoader (帮你处理 batch 和 shuffle)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True)
     
-    return sqrt_alphas_cumprod_t * x_0 + sqrt_one_minus_alphas_cumprod_t * noise
+    return dataloader
 ```
+
+```python
+#modules.py
+#此处我们采用unet网络来做扩散模型的基础网络结构，与经典的unet网络不同，我们需要让unet网络有时间观念，也就是知道当前是第几步。
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
+
+class SinusoidalpositionalEmbedding(nn.Module):
+    """
+    将一个整数t变为一个特征向量。
+    原理和Transformer的位置编码一样，用sin/cos函数。
+    以此来让网络明白500和501很近，和100很远。
+    """
+    def __init__(self,dim):
+        super().__init__()
+        self.dim = dim
+
+    def forward(self,time):
+        device = time.device
+        half_dim = self.dim//2
+        embeddings = math.log(10000)/ (half_dim -1)
+        embeddings = torch.exp(torch.arange(half_dim,device=device)* -embeddings)
+        embeddings = time[:, None] * embeddings[None, :]
+        embeddings = torch.cat((embeddings.sin(), embeddings.cos()), dim=-1)
+        return embeddings
+    
+class DoubleConv(nn.Module):
+    """这是采用LN的卷积块，用于搭建unet网络,不用BN的原因是Diffusion模型中batch size通常较小，BN效果不好"""
+    def __init__(self,in_channels,out_channels):
+        super().__init__()
+        self.double_conv = nn.Sequential(
+            nn.Conv2d(in_channels,out_channels,kernel_size=3,padding=1),
+            nn.GroupNorm(1,out_channels),#相当于LN
+            nn.GELU(),
+            nn.Conv2d(out_channels,out_channels,kernel_size=3,padding=1),
+            nn.GroupNorm(1,out_channels),
+            nn.GELU()
+        )
+    def forward(self,x):
+        return self.double_conv(x)
+    
+class UNet(nn.Module):
+    def __init__(self,c_in=1,c_out=1,time_dim=256,device ="cuda"):
+        super().__init__()
+        self.device = device
+        self.time_dim = time_dim
+        
+        #1.输入层
+        self.inc = DoubleConv(c_in,64)
+        
+        #2.下采样路径
+        self.down1 = DoubleConv(64, 128)
+        self.sa1 = nn.Identity() # 这里可以加 Attention，为了简单先留空
+        self.down2 = DoubleConv(128, 256)
+        self.sa2 = nn.Identity()
+        self.down3 = DoubleConv(256, 256)
+        self.sa3 = nn.Identity()
+        
+        #3.底部
+        self.bot1 = DoubleConv(256, 512)
+        self.bot2 = DoubleConv(512, 512)
+        self.bot3 = DoubleConv(512, 256)
+
+        #4.上采样路径(你使用反卷积，因为容易有棋盘伪影，使用放大+卷积)
+        self.up1 = DoubleConv(512, 128) # 256 + 256 (skip connection)
+        self.sa4 = nn.Identity()
+        self.up2 = DoubleConv(256, 64)  # 128 + 128
+        self.sa5 = nn.Identity()
+        self.up3 = DoubleConv(128, 64)  # 64 + 64
+        self.sa6 = nn.Identity()
+
+        #5.输出层
+        self.outc = nn.Conv2d(64,c_out,kernel_size = 1)
+
+        #6.下采样和上采样的工具
+        self.maxpool = nn.MaxPool2d(2)
+        self.upsample = nn.Upsample(scale_factor=2,mode="bilinear",align_corners=True)
+
+        #7.时间步嵌入的全连接层
+        self.time_mlp = nn.Sequential(
+            SinusoidalpositionalEmbedding(time_dim),
+            nn.Linear(time_dim,time_dim),
+            nn.GELU(),
+            nn.Linear(time_dim,time_dim)
+        )
+
+    def forward(self,x,t):
+        #1.处理时间
+        t = t.unsqueeze(-1).type(torch.float)
+        t = self.time_mlp(t)
+        
+        #2.下采样
+        x1 = self.inc(x)  # (B,64,H,W)
+        x2 = self.down1(self.maxpool(x1)) # (B,128,H/2,W/2)
+        x3 = self.down2(self.maxpool(x2)) # (B,256,H/4,W/4)
+        x4 = self.down3(self.maxpool(x3)) # (B,256,H/8,W/8)
+
+        #3.底部
+        x4 = self.bot1(x4)
+        x4 = self.bot2(x4)
+        x4 = self.bot3(x4)
+
+        #4.上采样
+        x = self.upsample(x4)
+        x = torch.cat((x,x3),dim=1)
+        x = self.up1(x)
+        
+        x = self.upsample(x)
+        x = torch.cat((x,x2),dim=1)
+        x = self.up2(x)
+
+        x = self.upsample(x)
+        x = torch.cat((x,x1),dim=1)
+        x = self.up3(x)
+
+        #5.输出层
+        output = self.outc(x)
+        return output
+    
+if __name__ == "__main__":
+    import torch
+    # 模拟输入
+    # Batch=3, Channel=1 (黑白图), Size=32x32
+    x = torch.randn(3, 1, 32, 32)
+    # 随机生成 3 个时间步 t
+    t = torch.randint(0, 1000, (3,))
+    
+    # 实例化模型
+    model = UNet()
+    
+    # 前向传播
+    preds = model(x, t)
+    
+    print(f"输入形状: {x.shape}")
+    print(f"输出形状: {preds.shape}")
+    
+    if x.shape == preds.shape:
+        print("✅ 成功！输入和输出形状一致，网络搭建完成！")
+    else:
+        print("❌ 失败！输出形状不对，必须和输入完全一样。")
+    
+```
+
+```python
+#diffusion.py
+import torch
+import torch.nn.functional as F
+from tqdm import tqdm
+class Diffusion:
+    def __init__(self, noise_steps=1000, beta_start=1e-4, beta_end=0.02, img_size=32, device="cuda"):
+        self.noise_steps = noise_steps
+        self.beta_start = beta_start
+        self.beta_end = beta_end
+        self.img_size = img_size
+        self.device = device
+        
+        # 1. 准备噪声调度表 (Beta Schedule)
+        self.beta = self.prepare_noise_schedule().to(device)
+        
+        # 2. 计算 Alpha 及相关变量 (核心数学公式)
+        self.alpha = 1. - self.beta
+        # 任务：计算 alpha_hat (即 alpha 的累乘 cumprod)
+        self.alpha_hat = torch.cumprod(self.alpha, dim=0) # <--- 填空
+        
+    def prepare_noise_schedule(self):
+        # 任务：生成从 beta_start 到 beta_end 的线性序列
+        return torch.linspace(self.beta_start, self.beta_end, self.noise_steps)
+
+    def noise_images(self, x, t):
+        """
+        x: 输入图像 batch (Batch, 3, 32, 32)
+        t: 时间步 batch (Batch,)
+        返回: (加噪后的图, 也就是 x_t,  添加的噪声 noise)
+        """
+        sqrt_alpha_hat = torch.sqrt(self.alpha_hat[t])[:, None, None, None]
+        sqrt_one_minus_alpha_hat = torch.sqrt(1 - self.alpha_hat[t])[:, None, None, None]
+        
+        epsilon = torch.randn_like(x)
+        
+        # 任务：根据公式 x_t = sqrt(alpha_hat) * x + sqrt(1 - alpha_hat) * epsilon 实现
+        return sqrt_alpha_hat * x + sqrt_one_minus_alpha_hat * epsilon, epsilon 
+
+    def sample_timesteps(self, n):
+        """随机采样时间步 t，用于训练"""
+        return torch.randint(low=1, high=self.noise_steps, size=(n,), device=self.device)
+
+    def sample(self,model,n,labels=None,cfg_scale=3):
+        print(f"Sampling {n} new images...")
+        model.eval()
+        with torch.no_grad():
+            # 初始形态：纯高斯噪声，我们用的1通道，因为FashionMNIST时黑白数据集
+            x = torch.randn((n,1,self.img_size,self.img_size)).to(self.device)
+
+            for i in tqdm(reversed(range(1,self.noise_steps)),position=0):
+                t = (torch.ones(n)*i).long().to(self.device)
+
+                predicted_noise = model(x,t)
+
+                #x_{t-1} = 1/sqrt(alpha) * (x_t - ...) + sigma * z
+
+                alpha = self.alpha[t][:, None, None, None]
+                alpha_hat = self.alpha_hat[t][:, None, None, None]
+                beta = self.beta[t][:, None, None, None]
+                
+                if i > 1:
+                    noise = torch.randn_like(x)
+                else:
+                    noise = torch.zeros_like(x) # 最后一步不加噪
+                
+                # 5. 核心公式：减去预测的噪声，加上一点点随机扰动
+                x = (1 / torch.sqrt(alpha)) * (x - ((1 - alpha) / (torch.sqrt(1 - alpha_hat))) * predicted_noise) + torch.sqrt(beta) * noise
+                
+        model.train()
+        
+        # 6. 还原：把数值从 [-1, 1] 变回 [0, 1] 以便保存成图片
+        x = (x.clamp(-1, 1) + 1) / 2
+        x = (x * 255).type(torch.uint8)
+        return x
+
+
+# --- 测试代码 ---
+if __name__ == "__main__":
+    # 模拟一张随机图片
+    images = torch.randn(8, 3, 32, 32).to("cuda") # 假设 batch_size=8
+    diff = Diffusion(device="cuda")
+    
+    # 随机采样时间步
+    t = diff.sample_timesteps(8)
+    
+    # 加噪
+    x_t, noise = diff.noise_images(images, t)
+    
+    print(f"输入形状: {images.shape}")
+    print(f"加噪后形状: {x_t.shape}")
+    print("代码跑通了！")
+```
+
+```python
+#train.py
+import os
+import torch.nn as nn
+from torch import optim
+from tqdm import tqdm
+import torch
+from modules import UNet
+from dataset import get_dataloader
+from diffusion import Diffusion
+
+def train():
+    # 1.配置参数
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Using device: {device}")
+
+    batch_size = 64
+    image_size = 32
+    learning_rate = 3e-4
+    epochs = 10
+
+    # 2.初始化组件
+    dataloader = get_dataloader(batch_size=batch_size, img_size=image_size)
+
+    model = UNet(device=device).to(device)
+
+    optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
+
+    mse = nn.MSELoss()
+
+    diffusion = Diffusion(img_size=image_size, device=device)
+
+    if not os.path.exists("models"):
+        os.makedirs("models")
+    
+    # 3.训练
+    for epoch in range(epochs):
+        print(f"Starting epoch {epoch}/{epochs}...")
+
+        pbar = tqdm(dataloader)
+
+        for i,(images,labels) in enumerate(pbar):
+            # 准备数据
+            images = images.to(device)
+            # 随机采样时间步t
+            t = diffusion.sample_timesteps(images.shape[0])
+            # 加噪
+            x_t, noise = diffusion.noise_images(images, t)
+            
+            # 预测噪声
+            predicted_noise = model(x_t, t)
+            
+            # 计算损失
+            loss = mse(noise, predicted_noise)
+
+            #反向传播
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            # 更新进度条
+            pbar.set_postfix(MSE=loss.item())
+
+            # --- 4. 保存模型 ---
+            if i % 10 == 0:
+                torch.save(model.state_dict(), f"models/ckpt.pt")
+                print(f"Epoch {epoch+1} 模型已保存到 models/ckpt.pt")
+
+if __name__ == "__main__":
+    train()
+
+```
+
+```python
+#inference.py
+import torch
+import torchvision
+from modules import UNet
+from diffusion import Diffusion
+import os
+
+def generate_images():
+    #1.设置配置
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model_path = "models/ckpt.pt"
+
+    #2.初始化模型
+    model = UNet(device=device).to(device)
+
+    #3.加载权重
+    if os.path.exists(model_path):
+        loaded_state = torch.load(model_path)
+        model.load_state_dict(loaded_state)
+        print("模型权重加载成功")
+    else:
+        print("模型权重不存在")
+        return
+    
+    # 4.初始化扩散工具
+    diffusion = Diffusion(img_size=32,device=device)
+
+    # 5. 开始采样,生成 16 张图
+    sampled_images = diffusion.sample(model, n=16)
+    
+    # 6. 保存结果
+    if not os.path.exists("results"):
+        os.mkdir("results")
+        
+    # 把 16 张图拼成一个 4x4 的大方格
+    # 需要把 uint8 转回 float 0-1 才能让 make_grid 处理
+    save_images = sampled_images.float() / 255.0
+    grid = torchvision.utils.make_grid(save_images, nrow=4)
+    torchvision.utils.save_image(grid, "results/generated_fashion.png")
+    print("✅ 图片已生成，保存在 results/generated_fashion.png")
+
+if __name__ == "__main__":
+    generate_images()
+```
+
+结果如下：
+![alt text](notebook_images/generated_fashion.png)
