@@ -16,7 +16,7 @@ $$
 
 其中 $\epsilon \sim \mathcal{N}(0, \mathbf{I})$ 是高斯噪声。
 
-首先，我们明确一个概念，图像生成模型想做的一件事是学习真实图像的概率分布即$p_{data}(x|c)$,其中x是真实世界图像，c是文本条件。第一次看到真是图像的概率分布时，大家可能都有点懵逼。打个比方，一张224*224*3的图像，每个像素点上的RBG通道值都可以容易取值，那么可以得到的图像是天文级别，但是真实世界是不可能的，你无法看到黑色的雪花、弯腰的钢背兽。所以，真实世界的所有图像其实是满足一个概率分布的。
+首先，我们明确一个概念，图像生成模型想做的一件事是学习真实图像的概率分布即$p_{data}(x|c)$,其中x是真实世界图像，c是文本条件。第一次看到真实图像的概率分布时，大家可能都有点懵逼。打个比方，一张$224\*224\*3$的图像，每个像素点上的RBG通道值都可以容易取值，那么可以得到的图像是天文级别，但是真实世界是不可能的，你无法看到黑色的雪花、弯腰的钢背兽。所以，真实世界的所有图像其实是满足一个概率分布的。
 
 但是这个分布太复杂了，根本无法直接采样来还原，所以diffusion做了一个巧妙的操作:换一个好采样的点。我无法知道我想要复杂自然图像的概率分布，但是我将复杂分布慢慢抹平为高斯噪声，那么生成的时候只需要与抹平的操作反过来就行了，对应的就是加噪和去噪，我们学习的是这一过程，而非原始分布。那么为什么现在图像生成的输入都是噪声，而我们的提示词只是约束条件呢？打个比方：如果我们直接用提示词来生成图片，“一只在雪地里的白色哈士奇”对应现实世界会有无穷多张合理的图像，如果我们要拟合这样一个一对多的模型太复杂了，而且压根无法建立损失和训练方向。但是如果我们用噪声来提供随机性，决定“是哪一种可能世界”，就要容易得多！！！
 
@@ -452,4 +452,338 @@ if __name__ == "__main__":
 ```
 
 结果如下：
+
 ![alt text](notebook_images/generated_fashion.png)
+
+接下来，我们进行一下大的改进：
+- 条件控制 (Conditional Generation)：我们将加入 Label Embedding。把“类别信息”和“时间信息”相加，一起注入到网络里。这样模型不仅知道“现在是第几步”，还知道“老板让我画鞋子还是裤子”。
+
+- UNet 架构升级：
+    - 时间融合优化：不再是只在某一层加时间，而是像真正的 ResNet 那样，把时间嵌入投影到每一层卷积中。
+    - 自注意力机制 (Self-Attention)：在图像变小（特征变深）的层级加入 Attention，让模型能“看到全局”，画出更合理的结构（比如鞋带要对称）。
+
+修改代码如下：
+```
+# diffuison.py
+import torch
+import torch.nn.functional as F
+from tqdm import tqdm
+class Diffusion:
+    def __init__(self, noise_steps=1000, beta_start=1e-4, beta_end=0.02, img_size=32, device="cuda"):
+        self.noise_steps = noise_steps
+        self.beta_start = beta_start
+        self.beta_end = beta_end
+        self.img_size = img_size
+        self.device = device
+        
+        # 1. 准备噪声调度表 (Beta Schedule)
+        self.beta = self.prepare_noise_schedule().to(device)
+        
+        # 2. 计算 Alpha 及相关变量 (核心数学公式)
+        self.alpha = 1. - self.beta
+        # 任务：计算 alpha_hat (即 alpha 的累乘 cumprod)
+        self.alpha_hat = torch.cumprod(self.alpha, dim=0) # <--- 填空
+        
+    def prepare_noise_schedule(self):
+        # 任务：生成从 beta_start 到 beta_end 的线性序列
+        return torch.linspace(self.beta_start, self.beta_end, self.noise_steps)
+
+    def noise_images(self, x, t):
+        """
+        x: 输入图像 batch (Batch, 3, 32, 32)
+        t: 时间步 batch (Batch,)
+        返回: (加噪后的图, 也就是 x_t,  添加的噪声 noise)
+        """
+        sqrt_alpha_hat = torch.sqrt(self.alpha_hat[t])[:, None, None, None]
+        sqrt_one_minus_alpha_hat = torch.sqrt(1 - self.alpha_hat[t])[:, None, None, None]
+        
+        epsilon = torch.randn_like(x)
+        
+        # 任务：根据公式 x_t = sqrt(alpha_hat) * x + sqrt(1 - alpha_hat) * epsilon 实现
+        return sqrt_alpha_hat * x + sqrt_one_minus_alpha_hat * epsilon, epsilon 
+
+    def sample_timesteps(self, n):
+        """随机采样时间步 t，用于训练"""
+        return torch.randint(low=1, high=self.noise_steps, size=(n,), device=self.device)
+
+    def sample(self,model,n,labels=None,cfg_scale=3):
+        print(f"Sampling {n} new images...")
+        model.eval()
+        with torch.no_grad():
+            # 初始形态：纯高斯噪声，我们用的1通道，因为FashionMNIST时黑白数据集
+            x = torch.randn((n,1,self.img_size,self.img_size)).to(self.device)
+
+            for i in tqdm(reversed(range(1,self.noise_steps)),position=0):
+                t = (torch.ones(n)*i).long().to(self.device)
+
+                predicted_noise = model(x,t)
+
+                #x_{t-1} = 1/sqrt(alpha) * (x_t - ...) + sigma * z
+
+                alpha = self.alpha[t][:, None, None, None]
+                alpha_hat = self.alpha_hat[t][:, None, None, None]
+                beta = self.beta[t][:, None, None, None]
+                
+                if i > 1:
+                    noise = torch.randn_like(x)
+                else:
+                    noise = torch.zeros_like(x) # 最后一步不加噪
+                
+                # 5. 核心公式：减去预测的噪声，加上一点点随机扰动
+                x = (1 / torch.sqrt(alpha)) * (x - ((1 - alpha) / (torch.sqrt(1 - alpha_hat))) * predicted_noise) + torch.sqrt(beta) * noise
+                
+        model.train()
+        
+        # 6. 还原：把数值从 [-1, 1] 变回 [0, 1] 以便保存成图片
+        x = (x.clamp(-1, 1) + 1) / 2
+        x = (x * 255).type(torch.uint8)
+        return x
+
+
+# --- 测试代码 ---
+if __name__ == "__main__":
+    # 模拟一张随机图片
+    images = torch.randn(8, 3, 32, 32).to("cuda") # 假设 batch_size=8
+    diff = Diffusion(device="cuda")
+    
+    # 随机采样时间步
+    t = diff.sample_timesteps(8)
+    
+    # 加噪
+    x_t, noise = diff.noise_images(images, t)
+    
+    print(f"输入形状: {images.shape}")
+    print(f"加噪后形状: {x_t.shape}")
+    print("代码跑通了！")
+```
+
+接下来，我们往这个框架中继续加入CFG，CFG(Classifier_Free Guidance)用于控制：模型听指示词的话的程度有多强。他的工作原理是在生成时，模型会做两次预测：有条件的预测和无条件的预测(带不带提示词)，再通过公式$final = uncond + s*(cond-uncond)$进行结合。其中，s就是CFG scale,本质上是放大提示词信号，数值越大，生成图片与提示词方向越近，但是太大又会导致生成细节不自然。
+
+在训练过程中,我们需要加入随机概率(我设定为0.1)进行标签丢弃，当我们丢弃标签后，模型训练的是无条件下的生成，而后我们只需要在生成过程的采样函数中加入$final = uncond + s*(cond-uncond)$这一核心公式就可以了，代码如下：
+```
+# train.py
+import os
+import torch.nn as nn
+from torch import optim
+from tqdm import tqdm
+import torch
+from modules import UNet
+from dataset import get_dataloader
+from diffusion import Diffusion
+
+def train():
+    # 1.配置参数
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Using device: {device}")
+
+    batch_size = 64
+    image_size = 32
+    learning_rate = 3e-4
+    epochs = 20
+
+    # 2.初始化组件
+    dataloader = get_dataloader(batch_size=batch_size, img_size=image_size)
+
+    model = UNet(device=device).to(device)
+
+    optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
+
+    mse = nn.MSELoss()
+
+    diffusion = Diffusion(img_size=image_size, device=device)
+
+    if not os.path.exists("models"):
+        os.makedirs("models")
+    
+    # 3.训练
+    for epoch in range(epochs):
+        print(f"Starting epoch {epoch}/{epochs}...")
+
+        pbar = tqdm(dataloader)
+
+        for i,(images,labels) in enumerate(pbar):
+            # 准备数据
+            images = images.to(device)
+            labels = labels.to(device)
+            # 随机采样时间步t
+            t = diffusion.sample_timesteps(images.shape[0])
+            # 加噪
+            x_t, noise = diffusion.noise_images(images, t)
+
+            #---CFG修改---
+            #10%概率丢弃标签，学习无条件生成
+            if torch.rand(1).item()<0.1:
+                predicted_noise = model(x_t,t,y=None)
+            else:
+                predicted_noise = model(x_t, t,labels)
+            
+            # 计算损失
+            loss = mse(noise, predicted_noise)
+
+            #反向传播
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            # 更新进度条
+            pbar.set_postfix(MSE=loss.item())
+
+            # --- 4. 保存模型 ---
+            if i % 10 == 0:
+                torch.save(model.state_dict(), f"models/ckpt.pt")
+                print(f"Epoch {epoch+1} 模型已保存到 models/ckpt.pt")
+
+if __name__ == "__main__":
+    train()
+
+```
+
+```
+# diffusion.py
+import torch
+import torch.nn.functional as F
+from tqdm import tqdm
+class Diffusion:
+    def __init__(self, noise_steps=1000, beta_start=1e-4, beta_end=0.02, img_size=32, device="cuda"):
+        self.noise_steps = noise_steps
+        self.beta_start = beta_start
+        self.beta_end = beta_end
+        self.img_size = img_size
+        self.device = device
+        
+        # 1. 准备噪声调度表 (Beta Schedule)
+        self.beta = self.prepare_noise_schedule().to(device)
+        
+        # 2. 计算 Alpha 及相关变量 (核心数学公式)
+        self.alpha = 1. - self.beta
+        # 任务：计算 alpha_hat (即 alpha 的累乘 cumprod)
+        self.alpha_hat = torch.cumprod(self.alpha, dim=0) # <--- 填空
+        
+    def prepare_noise_schedule(self):
+        # 任务：生成从 beta_start 到 beta_end 的线性序列
+        return torch.linspace(self.beta_start, self.beta_end, self.noise_steps)
+
+    def noise_images(self, x, t):
+        """
+        x: 输入图像 batch (Batch, 3, 32, 32)
+        t: 时间步 batch (Batch,)
+        返回: (加噪后的图, 也就是 x_t,  添加的噪声 noise)
+        """
+        sqrt_alpha_hat = torch.sqrt(self.alpha_hat[t])[:, None, None, None]
+        sqrt_one_minus_alpha_hat = torch.sqrt(1 - self.alpha_hat[t])[:, None, None, None]
+        
+        epsilon = torch.randn_like(x)
+        
+        # 任务：根据公式 x_t = sqrt(alpha_hat) * x + sqrt(1 - alpha_hat) * epsilon 实现
+        return sqrt_alpha_hat * x + sqrt_one_minus_alpha_hat * epsilon, epsilon 
+
+    def sample_timesteps(self, n):
+        """随机采样时间步 t，用于训练"""
+        return torch.randint(low=1, high=self.noise_steps, size=(n,), device=self.device)
+
+    def sample(self,model,n,labels=None,cfg_scale=3):
+        print(f"Sampling {n} new images...")
+        model.eval()
+        with torch.no_grad():
+            # 初始形态：纯高斯噪声，我们用的1通道，因为FashionMNIST时黑白数据集
+            x = torch.randn((n,1,self.img_size,self.img_size)).to(self.device)
+
+            for i in tqdm(reversed(range(1,self.noise_steps)),position=0):
+                t = (torch.ones(n)*i).long().to(self.device)
+                #--- CFG ---
+                if cfg_scale>0 and labels is not None:
+                    predicted_noise_cond = model(x,t,labels)
+
+                    predicted_noise_uncond = model(x,t,y=None)
+
+                    predicted_noise = predicted_noise_uncond + cfg_scale*(predicted_noise_cond-predicted_noise_uncond)
+                else:
+                    predicted_noise = model(x,t,labels)
+
+                #x_{t-1} = 1/sqrt(alpha) * (x_t - ...) + sigma * z
+
+                alpha = self.alpha[t][:, None, None, None]
+                alpha_hat = self.alpha_hat[t][:, None, None, None]
+                beta = self.beta[t][:, None, None, None]
+                
+                if i > 1:
+                    noise = torch.randn_like(x)
+                else:
+                    noise = torch.zeros_like(x) # 最后一步不加噪
+                
+                # 5. 核心公式：减去预测的噪声，加上一点点随机扰动
+                x = (1 / torch.sqrt(alpha)) * (x - ((1 - alpha) / (torch.sqrt(1 - alpha_hat))) * predicted_noise) + torch.sqrt(beta) * noise
+                
+        model.train()
+        
+        # 6. 还原：把数值从 [-1, 1] 变回 [0, 1] 以便保存成图片
+        x = (x.clamp(-1, 1) + 1) / 2
+        x = (x * 255).type(torch.uint8)
+        return x
+
+
+# --- 测试代码 ---
+if __name__ == "__main__":
+    # 模拟一张随机图片
+    images = torch.randn(8, 3, 32, 32).to("cuda") # 假设 batch_size=8
+    diff = Diffusion(device="cuda")
+    
+    # 随机采样时间步
+    t = diff.sample_timesteps(8)
+    
+    # 加噪
+    x_t, noise = diff.noise_images(images, t)
+    
+    print(f"输入形状: {images.shape}")
+    print(f"加噪后形状: {x_t.shape}")
+    print("代码跑通了！")
+```
+
+```
+# inference.py
+import torch
+import torchvision
+from modules import UNet
+from diffusion import Diffusion
+import os
+
+def generate_images():
+    #1.设置配置
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model_path = "models/ckpt.pt"
+
+    #2.初始化模型
+    model = UNet(device=device).to(device)
+
+    #3.加载权重
+    if os.path.exists(model_path):
+        loaded_state = torch.load(model_path)
+        model.load_state_dict(loaded_state)
+        print("模型权重加载成功")
+    else:
+        print("模型权重不存在")
+        return
+    
+    # 4.初始化扩散工具
+    diffusion = Diffusion(img_size=32,device=device)
+
+    # 5. 开始采样,生成 16 张图,且全是靴子(class 9)
+    n = 16
+    target_class = 8
+    labels = torch.tensor([target_class] * n).to(device)
+    sampled_images = diffusion.sample(model, n, labels=labels,cfg_scale=9.0)
+    
+    # 6. 保存结果
+    if not os.path.exists("results"):
+        os.mkdir("results")
+        
+    # 把 16 张图拼成一个 4x4 的大方格
+    # 需要把 uint8 转回 float 0-1 才能让 make_grid 处理
+    save_images = sampled_images.float() / 255.0
+    grid = torchvision.utils.make_grid(save_images, nrow=4)
+    torchvision.utils.save_image(grid, "results/generated_fashion_cfg_9.png")
+    print("✅ 图片已生成，保存在 results/generated_fashion.png")
+
+if __name__ == "__main__":
+    generate_images()
+```
