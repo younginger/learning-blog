@@ -56,7 +56,7 @@ KL散度是图像生成模型常用的损失函数，回到最初的问题，我
 在合适的参数化下，上面的目标等价于MSE:$E_{x_0,\epsilon,t}[||\epsilon - \epsilon_{\zeta}(x_t,t)||^2]$
 
 ## 2. 代码实现
-
+### 2.1 原始框架
 第一次示例：
 
 ```python
@@ -454,6 +454,7 @@ if __name__ == "__main__":
 结果如下：
 
 ![alt text](notebook_images/generated_fashion.png)
+### 2.2 条件控制和UNet升级
 
 接下来，我们进行一下大的改进：
 - 条件控制 (Conditional Generation)：我们将加入 Label Embedding。把“类别信息”和“时间信息”相加，一起注入到网络里。这样模型不仅知道“现在是第几步”，还知道“老板让我画鞋子还是裤子”。
@@ -556,6 +557,7 @@ if __name__ == "__main__":
     print(f"加噪后形状: {x_t.shape}")
     print("代码跑通了！")
 ```
+### 2.3 CFG
 
 接下来，我们往这个框架中继续加入CFG，CFG(Classifier_Free Guidance)用于控制：模型听指示词的话的程度有多强。他的工作原理是在生成时，模型会做两次预测：有条件的预测和无条件的预测(带不带提示词)，再通过公式$final = uncond + s*(cond-uncond)$进行结合。其中，s就是CFG scale,本质上是放大提示词信号，数值越大，生成图片与提示词方向越近，但是太大又会导致生成细节不自然。
 
@@ -786,4 +788,312 @@ def generate_images():
 
 if __name__ == "__main__":
     generate_images()
+```
+### 2.4 DDIM(去噪扩散隐式模型)
+解决完控制力的问题后，我们来解决Diffusion模型的另外一个问题：生成速度太慢。我们使用DDIM进行提速。现在我们生成一张图片需要循环1000次，这对于小图来说还可以接受，一旦图片尺寸扩大，生成一批图片的时长将难以接受。**DDIM的核心目标就是将1000步压缩到几十步，而且不损失画质。**DDPM(马尔科夫链)每一步都以依赖前一步过程，而DDIM(非马尔科夫过程)可以实现跳步，并且不需要重新训练，只需要修改采样公式。
+
+DDIM的逻辑分为两步：
+ - 第一步:直接预测出原图。在第t步时，我们通过模型预测的噪声$\epsilon_\theta(x_t)$，利用逆向公式直接预测原图$x_0$：$$\text{Predicted } x_0 = \frac{x_t - \sqrt{1 - \bar{\alpha}_t} \epsilon_\theta(x_t)}{\sqrt{\bar{\alpha}_t}}$$
+ - 第二步:指向上一个指定的检查点。我们利用终点的$x_0$，按照扩散公式，把终点的$x_0$加上第t-20步的噪声量，就可以退回到第 $t-20$ 步。$$x_{t-\Delta t} = \sqrt{\bar{\alpha}_{t-\Delta t}} (\text{Predicted } x_0) + \sqrt{1 - \bar{\alpha}_{t-\Delta t}} \epsilon_\theta(x_t)$$，DDIM对应把采样过程写成 ODE / 概率流的一条确定轨迹，所以DDPM需要加随机噪声，而DDIM可以不加噪声。这个逻辑对应的数学本质是将一个SDE(随机微分方程)变为了ODE(微分方程)问题。
+
+我们现在在diffusion.py中新增一个ddim_sample函数：
+```
+    def ddim_sample(self,model,n,labels=None,cfg_scale=3.0,ddim_steps=50):
+        """
+        DDIM 采样算法：提速 20 倍的魔法
+        ddim_steps: 压缩后的总步数
+        """
+        print(f"🚀 启动 DDIM 采样，计划生成 {n} 张图片，压缩至 {ddim_steps} 步...")
+        with torch.no_grad():
+            #初始化噪声
+            x = torch.randn((n,1,self.img_size,self.img_size)).to(self.device)
+
+            #生成跳步的时间步序列
+            step_size = self.noise_steps//ddim_steps
+            time_steps = reversed(range(0,self.noise_steps,step_size))
+            for step in tqdm(time_steps, position=0):
+                # 获取当前的时间步 t
+                t = (torch.ones(n) * step).long().to(self.device)
+                
+                # 获取我们要跳到的下一个时间步 t_prev (也就是 t - 20)
+                prev_step = step - step_size
+                if prev_step < 0:
+                    prev_step = 0 # 触底反弹保护
+                t_prev = (torch.ones(n) * prev_step).long().to(self.device)
+                
+                # --- 🔴 CFG 核心逻辑 (完全复用你的正确代码) ---
+                if cfg_scale > 0 and labels is not None:
+                    predicted_noise_cond = model(x, t, y=labels)
+                    
+                    predicted_noise_uncond = model(x,t,y=None)
+                    
+                    # 完美的公式：基础 + 放大倍数 * 差值
+                    predicted_noise = predicted_noise_uncond + cfg_scale * (predicted_noise_cond - predicted_noise_uncond)
+                else:
+                    predicted_noise = model(x, t, y=labels)
+                # ----------------------------------------------
+                
+                # 获取当前 t 和 t_prev 的 alpha_hat_bar (累乘值)
+                alpha_hat_t = self.alpha_hat[t][:, None, None, None]
+                alpha_hat_t_prev = self.alpha_hat[t_prev][:, None, None, None]
+                
+                # --- 🔴 DDIM 核心数学公式 ---
+                # 步骤 A：利用当前的噪声，直接预测出原图 x0
+                pred_x0 = (x - torch.sqrt(1 - alpha_hat_t) * predicted_noise) / torch.sqrt(alpha_hat_t)
+                pred_x0 = pred_x0.clamp(-1, 1)
+                
+                # 步骤 B：计算指向 t_prev 时间步的特征方向
+                dir_xt = torch.sqrt(1 - alpha_hat_t_prev) * predicted_noise
+                
+                # 步骤 C：更新当前的 x (不需要加随机高斯噪声了！)
+                x = torch.sqrt(alpha_hat_t_prev) * pred_x0 + dir_xt
+                
+        model.train()
+        x = (x.clamp(-1, 1) + 1) / 2
+        x = (x * 255).type(torch.uint8)
+        return x
+```
+注意，在预测原本$x_0$时一定要加上上下界约束，防止数值溢出而导致效果过差。最终效果如下：
+
+### 2.5 LoRA(Low Rank Adaptation)
+在玩完上面这个基础的小模型后，现在我们来试试更大的实战。如果我们直接利用别人训练好的模型进行传统微调，我们需要把几十亿个参数全部解冻，再用自己的数据集进行微调，这需要耗费大量的人力物力。而LoRA的思路是我不动完整框架，而是戴上一副特色眼镜。
+
+#### 2.5.1 LoRA的数学核心:低秩分解
+LoRA的作者提出了一个假设：模型在适应一个特定的下游任务时，权重的更新量 $\Delta W$ 具有极低的“内在秩（Intrinsic Rank）”。这代表着实际上$\Delta W$中真正起作用的信息可能只需要几个线性无关维度就能表示。
+
+因此，我们将这个巨大的$\Delta W$强行拆解为两个极小的矩阵相乘：
+$$\Delta W = B \times A$$
+其中，$B$：一个降维矩阵，形状是 $d \times r$。$A$：一个升维矩阵，形状是 $r \times d$。$r$：就是我们设置的秩（Rank），通常非常小（比如 $r=4$ 或 $r=8$）。通过训练A和B，我们可以减少99%的训练参数量。
+
+这里有一个非常关键的细节：初始化。如果我们直接把随机初始化的A和B加入网络里，网络一开始的输出会直接崩溃，相当于毁掉了预训练的效果。
+
+LoRA 怎么解决这个问题？矩阵 $A$：用极其微小的随机数初始化（比如高斯分布）。矩阵 $B$：全部初始化为绝对的 0。这样一来，在训练的第一步（Step 0）时，$B \times A = 0$。此时 $W = W_{0} + 0 = W_{0}$。这意味着：在刚插上 LoRA 模块时，大模型的能力没有受到任何一丝一毫的改变和破坏。 随着梯度的反向传播，$B$ 才慢慢有了数值，开始一点点地把微调的知识注入到大模型中。
+
+首先，我们编码一个LoRA层函数，将模型中所有的线性层和卷积层增加上LoRA策略，并冻结原始的参数权重。需要注意的是，nn.MultiheadAttention内部的out_proj输出层也是nn.Linear，但是我们不能替换为我们的LoRALinear。这是因为PyTorch为了加速注意力机制，底层是用C++写的硬编码，它在计算时会直接调用self.out_proj.weight。而由于我们的LoRALinear是一个Wrapper，原有的权重被藏再来self.original_layer.weight,这会导致PyTorch找不到表面的.weight 属性，当场崩溃。所以我们需要设置黑名单来使得代码绕过高度封装的官方模块。
+
+代码如下:
+```
+#lora_inject.py
+import torch
+import torch.nn as nn
+import math
+
+class LoRALinear(nn.Module):
+    def __init__(self,original_layer:nn.Linear,rank=4,alpha=8):
+        super().__init__()
+        self.original_layer = original_layer
+
+        in_features = original_layer.in_features
+        out_features = original_layer.out_features
+
+        #降维和升维矩阵
+        self.lora_A = nn.Linear(in_features,rank,bias=False)
+        self.lora_B = nn.Linear(rank,out_features,bias=False)
+        self.scaling = alpha/rank
+        self.reset_parameters
+
+    def reset_parameters(self):
+        nn.init.kaiming_uniform_(self.lora_A.weight,a=math.sqre(5))
+        nn.init.zeros_(self.lora_B.weight)
+    
+    def forward(self,x):
+        original_output = self.original_layer(x)
+        lora_output = self.lora_B(self.lora_A(x))*self.scaling
+        return original_output +lora_output
+
+class LoRAConv2d(nn.Module):
+    def __init__(self,original_layer:nn.Conv2d,rank=4,alpha=8):
+        super().__init__()
+        self.original_layer = original_layer
+
+        in_channels =original_layer.in_channels
+        out_channels = original_layer.out_channels
+        kernel_size = original_layer.kernel_size
+        stride = original_layer.stride
+        padding = original_layer.padding
+
+        # A 矩阵：用同样的 kernel_size 进行降维提取特征
+        self.lora_A = nn.Conv2d(in_channels, rank, kernel_size, stride, padding, bias=False)
+        # B 矩阵：用 1x1 卷积快速升维还原 (这是最高效的做法)
+        self.lora_B = nn.Conv2d(rank, out_channels, kernel_size=1, stride=1, padding=0, bias=False)
+
+        self.scaling = alpha / rank
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        nn.init.kaiming_uniform_(self.lora_A.weight, a=math.sqrt(5))
+        nn.init.zeros_(self.lora_B.weight)
+
+    def forward(self, x):
+        return self.original_layer(x) + self.lora_B(self.lora_A(x)) * self.scaling
+    
+def inject_lora(model,rank=4,alpha=8):
+    #递归遍历整个模型，把所有的nn.Linear替换成带有LoRA旁路的版本
+    for param in model.parameters():
+        param.requires_grad = False
+
+    def replace_layers(module):
+        for name, child in module.named_children():
+            if isinstance(child, nn.MultiheadAttention):
+                continue  # 直接跳过，不往下找了
+
+            # 找到全连接层 -> 注入
+            if isinstance(child, nn.Linear):
+                setattr(module, name, LoRALinear(child, rank, alpha))
+            # 找到卷积层 (跳过 1x1 的卷积，比如最后输出的那一层，只改主要的) -> 注入
+            elif isinstance(child, nn.Conv2d) and child.kernel_size != (1, 1):
+                setattr(module, name, LoRAConv2d(child, rank, alpha))
+            # 其他结构继续往深处找
+            else:
+                replace_layers(child)
+        
+    replace_layers(model)
+    return model
+                
+```
+
+我们同样修改训练代码，采用Chest X-ray Pneumonia的公开数据集进行微调。我们的原始模型只能生成衣服等图片，但我们利用这个模型在公开数据集上进行LoRA微调，使得其可以生成胸部正常和肺炎的X光图，代码如下：
+```
+#train_lora.py
+import os
+import torch
+import torch.nn as nn
+from torch import optim
+from tqdm import tqdm
+
+# 导入你之前手搓的核心组件
+from modules import UNet
+from diffusion import Diffusion
+from lora_inject import inject_lora
+from dataset_med import get_med_dataloader
+
+def train_lora():
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    batch_size = 64
+    img_size =32
+    epochs = 20
+    leaaring_rate = 1e-3
+
+    train_path = "/home/data/jjl/diffuison/dataset/chest_xray/train"
+    dataloader,classes = get_med_dataloader(data_dir=train_path,batch_size=batch_size,img_size=img_size)
+
+    model = UNet(device=device).to(device)
+
+    pretrained_path = "models/ckpt.pt"
+    if os.path.exists(pretrained_path):
+        model.load_state_dict(torch.load(pretrained_path))
+        print("✅ 成功唤醒预训练的 '衣服' 基础大模型！")
+    else:
+        raise FileNotFoundError(f"❌ 找不到预训练权重 {pretrained_path}，无法进行微调！")
+    
+    model = inject_lora(model,rank=4)
+    model = model.to(device)
+
+    frozen_params = sum(p.numel() for p in model.parameters() if not p.requires_grad)
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"❄️ 冻结原模型参数: {frozen_params:,}")
+    print(f"🔥 微调 LoRA 参数: {trainable_params:,} (占比 {(trainable_params / (frozen_params + trainable_params) * 100):.2f}%)")
+
+    optimizer = optim.AdamW([p for p in model.parameters() if p.requires_grad],lr=leaaring_rate)
+
+    mse = nn.MSELoss()
+    diffusion = Diffusion(img_size=img_size, device=device)
+
+    for epoch in range(epochs):
+        print(f"Starting LoRA Epoch {epoch+1}/{epochs}...")
+        pbar = tqdm(dataloader)
+
+        for i, (images, labels) in enumerate(pbar):
+            images = images.to(device)
+            labels = labels.to(device) # X光片的标签是 0(正常) 或 1(肺炎)
+            
+            t = diffusion.sample_timesteps(images.shape[0])
+            x_t, noise = diffusion.noise_images(images, t)
+
+            # --- 完美继承的 CFG 逻辑 ---
+            # 10% 概率丢弃标签，传入 10 作为“空标签”
+            if torch.rand(1).item()<0.1:
+                predicted_noise = model(x_t,t,y=None)
+            else:
+                predicted_noise = model(x_t, t,labels)
+            
+            loss = mse(noise, predicted_noise)
+
+            optimizer.zero_grad()
+            loss.backward()
+            
+            # 防爆保险丝 (之前加过的梯度裁剪)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            
+            optimizer.step()
+            pbar.set_postfix(MSE=loss.item())
+
+        # 8. 保存挂载了 LoRA 后的新权重
+        torch.save(model.state_dict(), f"models/lora_med_ckpt.pt")
+
+if __name__ == "__main__":
+    train_lora()
+```
+
+最后我们调用这个模型生成图片，前6张为正常胸部X光图，后6张为肺炎X光图，代码如下：
+```
+#inference_med.py
+import os
+import torch
+import torchvision
+from modules import UNet
+from diffusion import Diffusion
+from lora_inject import inject_lora
+
+def generate_med_images():
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"🚀 启动医学影像生成，使用设备: {device}")
+
+    # 1. 初始化基础大模型 (这时候它只有原本的骨架)
+    model = UNet(device=device).to(device)
+
+    # 2. 🔴 关键一步：给骨架装上 LoRA 关节
+    # 注意：这里的 rank 必须和 train_lora.py 中设置的完全一致！
+    model = inject_lora(model, rank=4)
+    model = model.to(device)
+
+    # 3. 加载微调后的整体权重
+    # 因为我们在 train_lora.py 中用 torch.save 存了整个 model.state_dict()
+    lora_weight_path = "models/lora_med_ckpt.pt"
+    if os.path.exists(lora_weight_path):
+        model.load_state_dict(torch.load(lora_weight_path))
+        print("✅ 成功加载挂载了 LoRA 的医学模型权重！")
+    else:
+        print(f"❌ 找不到权重文件 {lora_weight_path}")
+        return
+
+    # 4. 初始化扩散工具
+    diffusion = Diffusion(img_size=32, device=device)
+
+    # 5. 设置你想要生成的医学标签
+    n = 16
+    # X 光数据集的规律：0 是 NORMAL(正常)，1 是 PNEUMONIA(肺炎)
+    # 我们生成前 8 张正常，后 8 张肺炎，来做一个直观的对比
+    labels = torch.tensor([0]*8 + [1]*8).to(device) 
+
+    sampled_images = diffusion.ddim_sample(
+        model, 
+        n=n, 
+        labels=labels, 
+        cfg_scale=2.0, 
+        ddim_steps=50  # 50 步足矣，享受飞一般的速度
+    )
+    
+    # 7. 保存结果
+    if not os.path.exists("results"):
+        os.mkdir("results")
+        
+    save_images = sampled_images.float() / 255.0
+    grid = torchvision.utils.make_grid(save_images, nrow=4)
+    torchvision.utils.save_image(grid, "results/generated_xray.png")
+    print("✅ 图像已生成，保存在 results/generated_xray.png")
+
+if __name__ == "__main__":
+    generate_med_images()
+
 ```
