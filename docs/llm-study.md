@@ -135,3 +135,58 @@ def apply_rotray(q,k,cos,sin):
     return q_rot, k_rot
 ```
 注意，RoPE只作用在Q和K上。回到最开始的思路，RoPE是将位置编码融入到token之间的相似度中，而注意力机制中token相似度的计算只与Q和K相关，V只是键值。而为什么RoPE支持更长的context呢？这里有两个原因，一是sin/cos的绝对编码表示的绝对位置信息，而attention更需要相对位置信息；二是extrapolation不稳定，一旦推理时模型没有见过某些位置就会出错，二RoPE中i与j的计算时的位置编码只与i-j有关。
+
+### 1.3SwiGLU
+很多人学习Transformer时可能认为Attention进行的注意力交互是最重要的,其实在LLM中FFN参数大于Attention参数,所以FFN的设计非常关键。
+
+原始的Transformer FFN采用$FFN(x) = max(0,xW_1)W_2$,采用线性层（升维）-非线性激活函数-线性层（降维）的设计。而GLU提出一个思想：让网络学会控制信息流$GLU(x)=(xW_1)\otimes \sigma (xW_2)$，也就是value*gate，类似于LSTM的门控通道。Google在论文中进一步提出了SwiGLU，公式为$SwiGLU(x) = (xW_1) \otimes swish(xW_2)$,其中swish(x)=x*sigmoid(x)。
+
+为什么SwiGLU能得到更好的效果？原因在于加入了门控属性，可以动态地进行特征选择。LLaMA FFN架构为x->Linear->Linear2->SwiGLU->Linear3，实现如下：
+```
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class SwiGLU(nn.Module):
+    def __init__(self,dim):
+        super().__init__()
+        hidden = dim*4
+        self.w1 = nn.linear(dim,hidden)
+        self.w2 = nn.linear(dim,hidden)
+        self.w3 = nn.linear(hidden,dim)
+
+    def forward(self,x):
+        gate = F.silu(self.wi(x))
+        value = self.w2(x)
+
+        out = gate * value
+
+        return self.w3(out)
+```
+
+### 1.4 KV Cache
+LLM存在一个推理问题，假设我们现在生成一句话：王某不是人，每生成一个字模型都要重新计算上下文地Attention，复杂度为$O(n^3)$。
+
+所以我们需要引入KV Cache的核心思想：历史token的K和V不会变化，所以可以缓存。第一次计算K1，V1；第二次计算K2 V2，然后K = [K1,K2]，V = [V1,V2]，复杂度就降为了$O(n^2)$。代码示例：
+```
+K_cache = []
+V_cache = []
+
+def forward(x):
+
+    q = Wq(x)
+    k = Wk(x)
+    v = Wv(x)
+
+    K_cache.append(k)
+    V_cache.append(v)
+
+    K = concat(K_cache)
+    V = concat(V_cache)
+
+    attn = softmax(q @ K.T)
+
+    out = attn @ V
+
+    return out
+```
