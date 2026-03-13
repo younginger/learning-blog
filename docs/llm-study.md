@@ -284,3 +284,57 @@ class MiniLLaMA(nn.Module):
 在tokenizetion这个环节，最简单的方法就是Character Tokenization,也就是一个字符对应一个数字，但是这样会导致一些较差的sequence对应很长的字符token，这会使attention计算陈本爆炸。另外一种方法是Word Tokenization，也就是一个单词对应一个token，但是这会使得Vocabulary爆炸，每个单词都需要一个token，模型矩阵规模极大。现代方法一般采用Subword tokenization,也就是常见单词对应一个token，罕见单词则采取拆分的策略。例如internationalization对应international和ization或者inter、nation、al和ization。而GPT系列采用的是另一种方法BPE(Byte Pair Encoding)。它的核心思想是不断合并最常见的字符对，举个例子，最初的训练语料是：low、lower、newest和widest。则初始tokens就是l、o、w、l、o、w、e、r、n、e、w、e、s、t、w、i、d、e、s、t；然后我们不断统计最常见的字符并进行合并，最终vocabulary就会变为l、o、w、lo、low、er和est。
 
 不同的tokenizetion策略会得到不同的vocabulary，这会导致训练效果大不相同，所以tokenization的策略至关重要。接下来我们介绍LLaMA的Tokenizer算法---SentencePiece tokenizer。
+
+在传统的Tikenization中，通常需要先用空格将句子分词（Pre-tokenization），但这对于中文等不以空格分隔单词的语言非常不友好。SentencePiece的核心思想是将空格也视为一个普通的字符，直接对未经过任意预处理的生文本流进行训练。它有以下两个重要特征：
+- BPE算法 on SenttencePiece：底层的词表合并逻辑依然是BPE，但直接处理包含空格的完整字符串。
+- Byte-fallback机制:当遇到此表中不存在的罕见字符时，传统的Tokenizer会输出<UNK>导致信息丢失。LLaMA会将这些未知字符拆解成底层的UTF-8字节，用256个基础字节Token来表示它们。这样一来，LLaMA的词表就能消除out of vocabulary现象。
+
+### 2.2预训练数据准备:Data Packing
+大预言模型的预训练目标非常简单：Next Token Prediction。
+但是真是的文档长度不一，未来充分利用GPU的并行计算能力，我们需要把文本拼接起来，塞满模型的上下文窗口，这个过程就叫Packing。
+
+Packing的逻辑就是用 <EOS>（End of Sentence）标记把不同文档连起来，并切分成固定长度的块（Block）。
+举个例子：
+
+Doc1: "我爱学习。"Doc2: "LLaMA很强大。"
+
+拼合: [BOS]我爱学习。[EOS][BOS]LLaMA很强大。[EOS]
+
+切块(假设长度为8):
+
+Chunk 1: [BOS], 我, 爱, 学, 习, 。, [EOS], [BOS]
+
+Chunk 2: L, L, a, M, A, 很, 强, 大
+
+LLaMA的此表一开始只有32000代下，但是今天的大模型基本词表都高达60000甚至130000，这是因为LLaMA原生设计主要针对英语，英语依靠26个字母加常见词缀，32000的词表就可以覆盖绝大多数subword。但是LLaMA一遇到中文字符就会触发Byte-fallback，将一个汉字拆解为3个UTF-8字节。这就导致 LLaMA 遇到中文时，一个汉字会消耗 3 个 Token，大大降低了模型的上下文利用率（Context Length），也变相增加了注意力机制的计算压力。因此，未来提高中文处理效率，把大量常见汉字和中文词组加入词表中可以减少消耗的token数，提高计算效率。
+
+在预训练时，我们的输入和标签在形状和内容上的关系类似于向左平移了一位。比如：如果序列是 [1, 2, 3, 4, 5]，作为训练数据时：
+
+输入 x 是 [1, 2, 3, 4]（看到 1 预测 2，看到 1,2 预测 3...）
+
+标签 y 是 [2, 3, 4, 5]
+
+现在让我们用代买来实现Data Packing过程:
+```
+import torch
+
+def pack_data(tokenized_docs,max_len):
+    # 展平文档
+    flat_tokens = []
+    for doc in tokenized_docs:
+        flat_tokens.extend(doc)
+    #计算能切分出多少个完整的block
+    total_len = len(flat_tokens)
+    num_blocks = total_len//max_len
+
+    # 截取正好能被 max_len 整除的长度
+    flat_tokens = flat_tokens[:num_blocks * max_len]
+    
+    # 转换为 Tensor 并 Reshape
+    tensor_data = torch.tensor(flat_tokens)
+    packed_data = tensor_data.view(num_blocks, max_len)
+    
+    return packed_data
+```
+### 2.3 LLM预训练的核心
+预训练阶段，模型唯一的目标就是根据上文猜测下一个字是什么。
