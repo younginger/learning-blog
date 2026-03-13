@@ -165,7 +165,7 @@ class SwiGLU(nn.Module):
 ```
 
 ### 1.4 KV Cache
-LLM存在一个推理问题，假设我们现在生成一句话：王某不是人，每生成一个字模型都要重新计算上下文地Attention，复杂度为$O(n^3)$。
+LLM存在一个推理问题，假设我们现在生成一句话：王某不是人，每生成一个字模型都要重新计算上下文的Attention，复杂度为$O(n^3)$。
 
 所以我们需要引入KV Cache的核心思想：历史token的K和V不会变化，所以可以缓存。第一次计算K1，V1；第二次计算K2 V2，然后K = [K1,K2]，V = [V1,V2]，复杂度就降为了$O(n^2)$。代码示例：
 ```
@@ -216,7 +216,7 @@ out = F.scaled_dot_product_attention(
     is_causal=True
 )
 ```
-### 1.6 mini-LLaMA LLaMA
+### 1.6 mini-LLaMA
 最后的这个小节我们完成一个完整的mini-LLaMA代码：
 ```
 import torch
@@ -286,8 +286,8 @@ class MiniLLaMA(nn.Module):
 不同的tokenizetion策略会得到不同的vocabulary，这会导致训练效果大不相同，所以tokenization的策略至关重要。接下来我们介绍LLaMA的Tokenizer算法---SentencePiece tokenizer。
 
 在传统的Tikenization中，通常需要先用空格将句子分词（Pre-tokenization），但这对于中文等不以空格分隔单词的语言非常不友好。SentencePiece的核心思想是将空格也视为一个普通的字符，直接对未经过任意预处理的生文本流进行训练。它有以下两个重要特征：
-- BPE算法 on SenttencePiece：底层的词表合并逻辑依然是BPE，但直接处理包含空格的完整字符串。
-- Byte-fallback机制:当遇到此表中不存在的罕见字符时，传统的Tokenizer会输出<UNK>导致信息丢失。LLaMA会将这些未知字符拆解成底层的UTF-8字节，用256个基础字节Token来表示它们。这样一来，LLaMA的词表就能消除out of vocabulary现象。
+    - BPE算法 on SenttencePiece：底层的词表合并逻辑依然是BPE，但直接处理包含空格的完整字符串。
+    - Byte-fallback机制:当遇到此表中不存在的罕见字符时，传统的Tokenizer会输出<UNK>导致信息丢失。LLaMA会将这些未知字符拆解成底层的UTF-8字节，用256个基础字节Token来表示它们。这样一来，LLaMA的词表就能消除out of vocabulary现象。
 
 ### 2.2预训练数据准备:Data Packing
 大预言模型的预训练目标非常简单：Next Token Prediction。
