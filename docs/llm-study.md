@@ -190,3 +190,97 @@ def forward(x):
 
     return out
 ```
+
+注意，只有GPT这类采用因果掩膜技术的才能使用KV Cache，因为每个token的Q,K值只与之前的token有关。而像Bert这类上下文计算token的无法使用KV Cache，因为没加入一个新token都需要重新计算Q,K值。
+
+### 1.5 FlashAttention
+Attention的计算公式：$$Attention(Q,K,V)=softmax(\frac{QK^T}{\sqrt{d}})V$$这个计算需要散步：计算$QK^T$---softmax---乘V。而Attention的真实瓶颈在于$QK^T$据很很大，而不是计算量大的问题。Attention需要大量的memory read/write的过程，这会耗费大量的时间，因此有了FlashAttention,他是长context能实现的关键技术。
+
+FlashAttention的核心思想实不要存完整的$QK^T$，而是分块计算。FlashAttention的计算流程如下：
+```
+for Q_block:
+    for K_block:
+        compute attention
+        update output
+```
+这个流程全部在SRAM完成，避免GPU global memory IO。
+在pytorch中我们可以实现底层自动调用FlashAttention kernel：
+```
+import torch
+import torch.nn.functional as F
+
+out = F.scaled_dot_product_attention(
+    q,
+    k,
+    v,
+    is_causal=True
+)
+```
+### 1.6 mini-LLaMA LLaMA
+最后的这个小节我们完成一个完整的mini-LLaMA代码：
+```
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class LLaMABlock(nn.Module):
+    def __init__(self,dim,heads):
+        super().__init__()
+
+        self.norm1 = RMSnorm(dim)
+        self.norm2 = RMSnorm(dim)
+        self.atten = nn.MultiheadAttention(
+            dim,
+            heads,
+            batch_first = True
+        )
+
+        self.ffn = nn.Sequential(
+            nn.Linear(dim,dim*4),
+            nn.GELU(),
+            nn.Linear(dim*4,dim)
+        )
+
+    def forward(self,x):
+        n = self.norm1(x)
+        h,_ = self.atten(
+            n,
+            n,
+            n
+        )
+
+        x = x+h
+
+        x = x +self.ffn(self.norm2(x))
+
+        return x
+
+class MiniLLaMA(nn.Module):
+    def __init__(self,vocab,dim,layers):
+        super().__init__()
+        self.embed = nn.Embedding(vocab,dim)
+        self.blocks = nn.ModuleList(
+            [LLaMABlock(dim,8) for _ in range(layers)]
+        )
+
+        self.norm = RMSNorm(dim)
+        self.lm_head = nn.Linear(dim,vocab)
+
+    def forward(self, x):
+
+        x = self.embed(x)
+
+        for block in self.blocks:
+            x = block(x)
+
+        x = self.norm(x)
+
+        return self.lm_head(x)
+```
+## 2.LLM Tokenization + Pretraining
+### 2.1 Tokenizer
+神经网络只能处理数字tensor，所以模型输入环节必须做的一件事便是text->tokens->ids。
+
+在tokenizetion这个环节，最简单的方法就是Character Tokenization,也就是一个字符对应一个数字，但是这样会导致一些较差的sequence对应很长的字符token，这会使attention计算陈本爆炸。另外一种方法是Word Tokenization，也就是一个单词对应一个token，但是这会使得Vocabulary爆炸，每个单词都需要一个token，模型矩阵规模极大。现代方法一般采用Subword tokenization,也就是常见单词对应一个token，罕见单词则采取拆分的策略。例如internationalization对应international和ization或者inter、nation、al和ization。而GPT系列采用的是另一种方法BPE(Byte Pair Encoding)。它的核心思想是不断合并最常见的字符对，举个例子，最初的训练语料是：low、lower、newest和widest。则初始tokens就是l、o、w、l、o、w、e、r、n、e、w、e、s、t、w、i、d、e、s、t；然后我们不断统计最常见的字符并进行合并，最终vocabulary就会变为l、o、w、lo、low、er和est。
+
+不同的tokenizetion策略会得到不同的vocabulary，这会导致训练效果大不相同，所以tokenization的策略至关重要。接下来我们介绍LLaMA的Tokenizer算法---SentencePiece tokenizer。
