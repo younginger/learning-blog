@@ -35,6 +35,7 @@ nav:
   - 学习笔记:
       - 扩散模型: diffusion-study.md
       - 大模型: llm-study.md
+      - 强化学习: RL.md
       - 医学图像: medical-ai.md  # 占位，稍后创建
   - 生活瞬间:                    # <--- 新增的分区
       - 热爱当下: photography.md

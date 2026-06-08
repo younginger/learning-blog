@@ -21,6 +21,15 @@ hide:
     <div class="carousel-slide">
         <img src="assets/images/banner3.jpg" alt="Project 3">
     </div>
+    <div class="carousel-slide">
+        <img src="assets/images/banner4.jpg" alt="Project 4">
+    </div>
+    <div class="carousel-slide">
+        <img src="assets/images/banner5.jpg" alt="Project 5">
+    </div>
+    <div class="carousel-slide">
+        <img src="assets/images/banner6.jpg" alt="Project 6">
+    </div>
     </div>
 
 
