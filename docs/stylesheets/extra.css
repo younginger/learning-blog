@@ -142,18 +142,17 @@
    ======================================================= */
 
 /* Material 的 data-md-color-scheme 挂在 body 上 */
-body[data-md-color-scheme="slate"] {
+[data-md-color-scheme="slate"] .md-main {
 
-    /* 背景图 + 暗色遮罩 */
     background:
         linear-gradient(
-            rgba(0, 0, 0, 0.75),
-            rgba(0, 0, 0, 0.75)
+            rgba(0,0,0,0.6),
+            rgba(0,0,0,0.6)
         ),
         url("../assets/images/bg.jpg");
 
     background-size: cover;
-    background-position: center center;
+    background-position: center;
     background-repeat: no-repeat;
     background-attachment: fixed;
 }
