@@ -137,21 +137,60 @@
 }
 
 /* --- 全局背景图设置 （有问题）--- */
-/* 仅在深色模式（科幻模式）下生效 */
-[data-md-color-scheme="slate"] body {
-    /* 1. 设置背景图路径 (注意 ../ 是返回上一级目录) */
-    background-image: url('../assets/images/bg.jpg'); 
+/* =======================================================
+   全局科幻背景（仅深色模式）
+   ======================================================= */
 
-    /* 2. 让背景图铺满屏幕且不重复 */
+/* Material 的 data-md-color-scheme 挂在 body 上 */
+body[data-md-color-scheme="slate"] {
+
+    /* 背景图 + 暗色遮罩 */
+    background:
+        linear-gradient(
+            rgba(0, 0, 0, 0.75),
+            rgba(0, 0, 0, 0.75)
+        ),
+        url("../assets/images/bg.jpg");
+
     background-size: cover;
-    background-repeat: no-repeat;
     background-position: center center;
-
-    /* 3. 【关键】固定背景，滚动网页时背景不动 */
+    background-repeat: no-repeat;
     background-attachment: fixed;
+}
 
-    /* 4. 增加一层半透明遮罩，防止背景太花看不清文字 */
-    /* 这行代码会让图片和原本的深色背景混合，变暗一点 */
-    background-blend-mode: multiply; 
+
+/* 让 Material 默认背景透明 */
+body[data-md-color-scheme="slate"] .md-main,
+body[data-md-color-scheme="slate"] .md-container {
+    background: transparent !important;
+}
+
+
+/* 内容区域增加磨砂玻璃效果 */
+body[data-md-color-scheme="slate"] .md-content {
+    background: rgba(10, 10, 18, 0.75);
+    backdrop-filter: blur(6px);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+
+/* 侧边栏透明 */
+body[data-md-color-scheme="slate"] .md-sidebar__scrollwrap {
+    background: rgba(10, 10, 18, 0.75);
+    backdrop-filter: blur(6px);
+}
+
+
+/* 顶部导航栏透明 */
+body[data-md-color-scheme="slate"] .md-header {
+    background: rgba(10, 10, 18, 0.85);
+    backdrop-filter: blur(10px);
+}
+
+
+/* 页脚透明 */
+body[data-md-color-scheme="slate"] .md-footer {
+    background: rgba(10, 10, 18, 0.85);
 }
 
