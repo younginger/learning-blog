@@ -38,7 +38,7 @@ hide:
 <div class="scifi-grid">
     <a href="diffusion-study/" class="scifi-card">
         <h3>⚡ 算法学习</h3>
-        <p>扩散模型</p>
+        <p>Diffusion、LLM、RL</p>
         <span style="color: var(--neon-cyan); font-size: 0.8rem;">> 学习使我快乐，吗？</span>
     </a>
 
