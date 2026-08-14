@@ -1,0 +1,1165 @@
+<!DOCTYPE html><html lang="en" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://younginger.github.io/learning-blog/RL/">
+      
+      
+        <link rel="prev" href="../llm-study/">
+      
+      
+        <link rel="next" href="../medical-ai/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>强化学习 - younginger 的摸鱼手册</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&amp;display=swap">
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <link href="../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="younginger 的摸鱼手册" class="md-header__button md-logo" aria-label="younginger 的摸鱼手册" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            younginger 的摸鱼手册
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              强化学习
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="purple" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="lime" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/younginger/learning-blog" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../diffusion-study/" class="md-tabs__link">
+          
+  
+  
+  学习笔记
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../photography/" class="md-tabs__link">
+          
+  
+  
+  生活瞬间
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  关于我
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="younginger 的摸鱼手册" class="md-nav__button md-logo" aria-label="younginger 的摸鱼手册" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+
+    </a>
+    younginger 的摸鱼手册
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/younginger/learning-blog" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked="">
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    学习笔记
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    学习笔记
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../diffusion-study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    扩散模型
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm-study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    大模型
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    强化学习
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../medical-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    医学图像
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3">
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    生活瞬间
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    生活瞬间
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../photography/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    热爱当下
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hobbies.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    第九艺术
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    关于我
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="_1"><center>强化学习</center></h1>
+<h1 id="_2">一、强化学习的数学基础</h1>
+<h2 id="1mdp">1.马尔可夫决策过程MDP(强化学习的语法)</h2>
+<p>任何强化学习问题，无论是大模型对齐(RLHF)还是控制机器人，在底层都可以被抽象为一个MDP。MDP由一个五元组构成:<span class="arithmatex">\((S,A,P,R,\gamma)\)</span>。
+- <span class="arithmatex">\(S\)</span> (State - 状态): 环境对智能体的描述。比如视觉任务中，状态可以是当前帧的图像特征。
+- <span class="arithmatex">\(A\)</span> (Action - 动作): 智能体可以执行的操作。比如相机云台的移动角度，或者大模型生成的下一个 Token。
+- <span class="arithmatex">\(P(s'|s, a)\)</span> (Transition Probability - 状态转移概率): 环境的动态特性。表示在状态 <span class="arithmatex">\(s\)</span> 下执行动作 <span class="arithmatex">\(a\)</span> 后，转移到下一个状态 <span class="arithmatex">\(s'\)</span> 的概率。注意：这体现了环境的随机性。
+- <span class="arithmatex">\(R(s, a, s')\)</span> (Reward - 奖励): 标量反馈信号。比如大模型输出的回复被人类点赞（+1）或踩（-1）。
+- <span class="arithmatex">\(\gamma\)</span> (Discount Factor - 折扣因子): 介于 0 到 1 之间的数值。它决定了智能体是更看重眼前的奖励，还是未来的长远收益。</p>
+<h2 id="2">2.贝尔曼体系</h2>
+<p>在监督学习中我们要找的是最优权重W;在强化学习中，我们要找的是最优策略（Optimal Policy, <span class="arithmatex">\(\pi^*\)</span>）。策略 <span class="arithmatex">\(\pi(a|s)\)</span> 就是在状态 <span class="arithmatex">\(s\)</span> 下选择动作 <span class="arithmatex">\(a\)</span> 的概率分布。</p>
+<h3 id="21">2.1价值函数</h3>
+<p>为了评价一个策略的好坏，我们定义了价值函数:$<span class="arithmatex">\(V^\pi(s) = \mathbb{E}_\pi \left[ \sum_{t=0}^{\infty} \gamma^t R_{t+1} \mid S_0 = s \right]\)</span>$
+这个公式的含义就是从状态s出发，遵循策略 <span class="arithmatex">\(\pi\)</span>，未来能拿到的所有奖励的折现总和的期望。
+而贝尔曼方程最伟大之处，在于它将这个无限期的累加过程，拆解成了当前的即时奖励加上下一个状态的价值，这是一种完美的递归关系（非常类似动态规划中的子问题拆解）：$<span class="arithmatex">\(V^\pi(s) = \sum_{a \in A} \pi(a|s) \sum_{s' \in S} P(s'|s, a) \left[ R(s, a, s') + \gamma V^\pi(s') \right]\)</span><span class="arithmatex">\(如果我们要寻找最优策略，就会推导出贝尔曼最优方程：在每个状态下，我们总是贪婪地选择那个能让未来期望价值最大的动作：\)</span><span class="arithmatex">\(V^*(s) = \max_a \sum_{s'} P(s'|s, a) \left[ R(s, a, s') + \gamma V^*(s') \right]\)</span>$</p>
+<p>我们可以把这两个方程拆解为三个层面的深刻认知:</p>
+<p>贝尔曼方程做的实际上是将总价值分解为了此刻的价值和未来的潜力价值。在没有贝尔曼方程之前，如果要计算一个状态的价值 <span class="arithmatex">\(V^\pi(s)\)</span>，我们需要用蒙特卡洛（Monte Carlo）思想去算期望。也就是从状态 <span class="arithmatex">\(s\)</span> 开始，让智能体跑完无数条轨迹（Trajectory），计算每条轨迹的累积折扣奖励 <span class="arithmatex">\(G_t\)</span>：$<span class="arithmatex">\(G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \dots\)</span><span class="arithmatex">\(然后对这些无限长的序列求平均：\)</span>V^\pi(s) = \mathbb{E}_\pi[G_t \mid S_t = s]$。这在计算上是灾难性的：轨迹长度可能是无限的，且随着步数增加，状态空间呈指数级爆炸。贝尔曼做了一个绝妙的代数变换，他提取了公因式 <span class="arithmatex">\(\gamma\)</span>：$<span class="arithmatex">\(G_t = R_{t+1} + \gamma (R_{t+2} + \gamma R_{t+3} + \dots) = R_{t+1} + \gamma G_{t+1}\)</span><span class="arithmatex">\(,代入期望公式得到贝尔曼期望方程：\)</span><span class="arithmatex">\(V^\pi(s) = \sum_{a \in A} \pi(a|s) \sum_{s' \in S} P(s'|s, a) \left[ R(s, a, s') + \gamma V^\pi(s') \right]\)</span>$</p>
+<p>当我们评估一个固定的策略 <span class="arithmatex">\(\pi\)</span> 时（也就是第一个公式），因为 <span class="arithmatex">\(\pi(a|s)\)</span> 和环境的转移概率 <span class="arithmatex">\(P(s'|s, a)\)</span> 都是固定的常数，这个看似复杂的求和公式，本质上就是一个极度纯粹的线性方程组。我们可以把它写成矩阵和向量的形式：$$V^\pi = R^\pi + \gamma P^\pi V^\pi
+$<span class="arithmatex">\(其中，\)</span>V^\pi$ 是一个列向量，维度是状态数量 <span class="arithmatex">\(N\)</span>。<span class="arithmatex">\(R^\pi\)</span> 是在策略 <span class="arithmatex">\(\pi\)</span> 下每个状态的期望即时奖励向量。<span class="arithmatex">\(P^\pi\)</span> 是状态转移概率矩阵（一个 <span class="arithmatex">\(N \times N\)</span> 的马尔可夫矩阵）。移项，提取 <span class="arithmatex">\(V^\pi\)</span>：$<span class="arithmatex">\((I - \gamma P^\pi) V^\pi = R^\pi\)</span>$这是一个标准形如 <span class="arithmatex">\(Ax = b\)</span> 的线性系统。只要我们知道环境的规则（即矩阵 <span class="arithmatex">\(P^\pi\)</span>），我们甚至不需要迭代，直接对矩阵求逆就能得到所有状态的精确价值：$<span class="arithmatex">\(V^\pi = (I - \gamma P^\pi)^{-1} R^\pi\)</span>$(注：因为转移矩阵 <span class="arithmatex">\(P^\pi\)</span> 的特征值都在单位圆内或上，且 <span class="arithmatex">\(\gamma &lt; 1\)</span>，所以 <span class="arithmatex">\((I - \gamma P^\pi)\)</span> 一定是可逆的。)这就是策略评估（Policy Evaluation）的数学本质。</p>
+<p>现在来看第二个公式：贝尔曼最优方程。$<span class="arithmatex">\(V^*(s) = \max_a \sum_{s'} P(s'|s, a) \left[ R(s, a, s') + \gamma V^*(s') \right]\)</span><span class="arithmatex">\(这里出现了一个极具破坏性的操作符：\)</span>\max_a$。因为 <span class="arithmatex">\(\max\)</span> 是一个非线性算子，最优方程不再是一个线性方程组了。这意味着我们无法用矩阵求逆来直接解出最优价值 <span class="arithmatex">\(V^*\)</span>。这也是为什么在复杂的环境中，寻找最优策略极其困难的原因。那怎么求解？这里就要用到巴拿赫不动点定理（Banach Fixed-Point Theorem）。我们可以把方程右边看作一个算子 <span class="arithmatex">\(B\)</span>（Bellman Optimality Operator）作用在价值函数向量 <span class="arithmatex">\(V\)</span> 上：$<span class="arithmatex">\(V_{k+1} = B(V_k)\)</span>$在数值分析中，只要算子 <span class="arithmatex">\(B\)</span> 是一个压缩映射（Contraction Mapping），那么无论初始的 <span class="arithmatex">\(V_0\)</span> 瞎猜成什么样子，反复执行 <span class="arithmatex">\(V_{k+1} = B(V_k)\)</span>，序列最终都一定会收敛到一个唯一的“不动点”，这个不动点就是我们梦寐以求的最优价值函数 <span class="arithmatex">\(V^*\)</span>。</p>
+<h3 id="22">2.2动作价值函数</h3>
+<p>如果只知道最优的V*(s),智能体在做决策时，依然需要知道环境的转移矩阵<span class="arithmatex">\(P(s'|s, a)\)</span>才能推算哪一步最好。但在现实任务（例如基于视觉输入的行为学建模或机器人控制）中，环境动态特性 <span class="arithmatex">\(P\)</span> 是未知的。这时候我们需要动作价值函数<span class="arithmatex">\(Q(s, a)\)</span> ,它表示在状态 <span class="arithmatex">\(s\)</span> 下，执行动作 <span class="arithmatex">\(a\)</span>，然后遵循策略 <span class="arithmatex">\(\pi\)</span>，未来能拿到的所有折现奖励期望，贝尔曼方程表示为：$<span class="arithmatex">\(Q^\pi(s, a) = \sum_{s'} P(s'|s, a) \left[ R(s, a, s') + \gamma V^\pi(s') \right]\)</span><span class="arithmatex">\(，它与V(s)的关系表示为:\)</span>V(s)$ 是 <span class="arithmatex">\(Q(s, a)\)</span> 在当前策略下的期望（加权平均）：$<span class="arithmatex">\(V^\pi(s) = \sum_{a \in A} \pi(a|s) Q^\pi(s, a)\)</span>$。如果有了最优的 <span class="arithmatex">\(Q^*(s, a)\)</span>，智能体直接取 <span class="arithmatex">\(\max_a Q^*(s, a)\)</span> 就能做出最优决策，彻底摆脱了对环境模型 <span class="arithmatex">\(P\)</span> 的依赖。</p>
+<h3 id="23as-a">2.3优势函数A(s, a)</h3>
+<p>优势函数A(s, a)表示为：$<span class="arithmatex">\(A^\pi(s, a) = Q^\pi(s, a) - V^\pi(s)\)</span>$，其含义是在状态s下，采取动作a比平均水平好多少的问题，它是降低策略梯度方差的核心武器。</p>
+<h3 id="24">2.4从方程到算法:动态规划</h3>
+<p>贝尔曼方程给出了数学上的完美等式，而在环境完全已知（即 <span class="arithmatex">\(P\)</span> 和 <span class="arithmatex">\(R\)</span> 已知）的前提下，我们如何从算法层面去求解这个问题？通常我们会用到两种方法：
+- 策略迭代 (Policy Iteration)： 包含两步。第一步是策略评估（解线性方程组求解 <span class="arithmatex">\(V^\pi\)</span>）；第二步是策略改进（根据当前的 <span class="arithmatex">\(V^\pi\)</span> 计算出 <span class="arithmatex">\(Q^\pi\)</span>，然后贪心选择 <span class="arithmatex">\(\max_a Q^\pi\)</span> 产生新策略）。如此反复，直到策略不再改变。
+- 价值迭代 (Value Iteration)： 直接暴力利用压缩映射原理，反复执行 <span class="arithmatex">\(V_{k+1}(s) = \max_a \sum_{s'} P(s'|s, a) \left[ R(s, a, s') + \gamma V_k(s') \right]\)</span>，直到 <span class="arithmatex">\(V\)</span> 向量收敛。</p>
+<h1 id="_3">二、无模型强化学习</h1>
+<h2 id="3monte-carlo">3.Monte Carlo</h2>
+<h3 id="31">3.1核心思想</h3>
+<p>环境的转移矩阵P大部分时候是未知的，那我们怎么评估一个状态的价值呢？特卡洛给出的答案极其简单粗暴：用经验代替上帝视角，用大数定律代替严格的概率计算。</p>
+<p>智能体遵循当前策略 <span class="arithmatex">\(\pi\)</span> 在环境中不断交互，直到回合结束，把这条完整的轨迹（Trajectory）记录下来：$<span class="arithmatex">\(S_1, A_1, R_2, S_2, A_2, R_3, \dots, S_T\)</span>$到达终点后，我们就可以真实地计算出某个状态 <span class="arithmatex">\(s\)</span> 之后累积的真实回报（Return）<span class="arithmatex">\(G_t\)</span>：$<span class="arithmatex">\(G_t = R_{t+1} + \gamma R_{t+2} + \dots + \gamma^{T-t-1} R_T\)</span>$只要我们跑的轨迹足够多，根据大数定律，这些真实回报的经验平均值，就会无限逼近真实的期望价值 <span class="arithmatex">\(V^\pi(s)\)</span>：$<span class="arithmatex">\(V(s) \approx \frac{1}{N(s)} \sum_{i=1}^{N(s)} G_{t}^{(i)}\)</span>$这就是蒙特卡洛策略评估的数学本质：用样本均值估计数学期望。</p>
+<h3 id="32q">3.2Q函数</h3>
+<p>在第一章中我们提到过Q(s,a),在蒙特卡洛方法中，<span class="arithmatex">\(Q\)</span> 函数从“配角”变成了绝对的“主角”。假设我们只估计出了状态价值 <span class="arithmatex">\(V(s)\)</span>，当我们要进行策略改进（选择最优动作）时，我们需要计算：$<span class="arithmatex">\(\pi'(s) = \arg\max_a \sum_{s'} P(s'|s, a) \left[ R(s, a, s') + \gamma V(s') \right]\)</span>$你会发现，公式里再次出现了 <span class="arithmatex">\(P(s'|s, a)\)</span>！ 这意味着，如果没有环境模型，即使知道了 <span class="arithmatex">\(V(s)\)</span>，你也无法知道选哪个动作能转移到高价值的状态。因此，蒙特卡洛方法必须直接评估动作价值函数 <span class="arithmatex">\(Q(s, a)\)</span>。我们统计的是：在状态 <span class="arithmatex">\(s\)</span> 采取动作 <span class="arithmatex">\(a\)</span> 后，最终获得的平均回报。有了 <span class="arithmatex">\(Q(s, a)\)</span>，策略改进就变成了极其简单的查表操作，彻底踢开了环境模型 <span class="arithmatex">\(P\)</span>：$<span class="arithmatex">\(\pi'(s) = \arg\max_a Q(s, a)\)</span>$</p>
+<h3 id="33">3.3探索与利用</h3>
+<p>由于我们是通过经验来学习，如果自能提总是贪婪地选择当前看起来最好地动作(即 <span class="arithmatex">\(\max_a Q\)</span>)它可能永远只会走那几条固定的轨迹，从而错过真正隐藏在未探索区域的最优解。为了保证所有的 <span class="arithmatex">\((s, a)\)</span> 组合都有非零的概率被访问到，蒙特卡洛控制通常采用 <span class="arithmatex">\(\epsilon\)</span>-greedy 策略：以 <span class="arithmatex">\(1 - \epsilon\)</span> 的概率，选择当前的最优动作（利用）。以 <span class="arithmatex">\(\epsilon\)</span> 的概率，在所有可能的动作中随机选择一个（探索）。这保证了经验收集的多样性。</p>
+<h3 id="34">3.4蒙特卡洛地缺陷</h3>
+<p>蒙特卡洛虽然直观且绝对无偏（Unbiased，因为它用的是真实的累积回报），但它在工程实现上存在严重的局限性：
+- 必须等待回合结束 (Episodic Limit)： 要计算 <span class="arithmatex">\(G_t\)</span>，必须等一条轨迹走到终点 <span class="arithmatex">\(S_T\)</span>。如果你在训练一个自动驾驶模型，难道每次都要等车撞毁了才能更新参数吗？它无法处理连续无终点的任务。
+- 方差极大 (High Variance)： <span class="arithmatex">\(G_t\)</span> 是一条长轨迹上所有奖励的累加。每一步的状态转移和动作选择都充满随机性。这就导致即使在同一个状态 <span class="arithmatex">\(s\)</span> 采取同一个动作 <span class="arithmatex">\(a\)</span>，每次跑出来的 <span class="arithmatex">\(G_t\)</span> 数值波动都可能极其剧烈。这种巨大的不确定性会导致网络收敛非常缓慢。</p>
+<h2 id="_4">补充章节一:方差与偏差</h2>
+<p>在强化学习中，几乎所有算法的演进，本质上都是在与“方差”和“偏差”这对宿敌作斗争。在机器学习中，我们总希望模型的估计既准（低偏差）又稳（低方差）。但在强化学习评估价值函数时，鱼与熊掌往往不可兼得。</p>
+<h3 id="11">补充1.1偏差</h3>
+<p>偏差代表估计值的期望与真实客观价值之间的系统性差距。在RL中，偏差主要来自于自举 (Bootstrapping)。所谓自举，就是“用猜的价值去更新猜的价值”。如果你的网络当前认为状态 A 的价值是 10，状态 B 的价值是 5，并以此指导后续的更新，但实际上这些估值完全是错的，这种系统性的错误就会顺着网络蔓延，这就是高偏差。</p>
+<h3 id="12">补充1.2方差</h3>
+<p>方差代表估计值在不同采样之间忽高忽低、剧烈波动的程度。在RL中，方差主要来自多步累积的随机性。智能体每走一步，都会经历两次掷骰子：一是策略 <span class="arithmatex">\(\pi(a|s)\)</span> 的随机性（比如 <span class="arithmatex">\(\epsilon\)</span>-greedy 探索）。二是环境转移概率 <span class="arithmatex">\(P(s'|s, a)\)</span> 的随机性（比如刮了一阵风，导致即使动作一样，结果也不同）。轨迹越长，随机性就以乘法级别指数级爆炸，导致每次算出来的总回报差异巨大。</p>
+<h3 id="13mc-vs-one-step-td">补充1.3两个极端:MC vs. One-Step TD</h3>
+<p>我们可以把上一章的蒙特卡洛（MC）和马上要讲的单步时序差分（TD(0)）放在这个天平的两端来对比：- Monte Carlo (零偏差，极高方差)：$<span class="arithmatex">\(G_t = R_{t+1} + \gamma R_{t+2} + \dots + \gamma^{T-t-1} R_T\)</span>$MC 绝对诚实。它一直走到回合结束，拿到的 <span class="arithmatex">\(G_t\)</span> 是真实发生的回报，没有使用任何猜的价值（零自举），所以它是无偏的 (Unbiased)。但是，它累积了从 <span class="arithmatex">\(t\)</span> 时刻到 <span class="arithmatex">\(T\)</span> 时刻成百上千步的随机性，导致方差极高。在工程上，高方差意味着神经网络训练极不稳定，Loss 疯狂震荡，收敛极其缓慢。
+- TD(0) / 一步时序差分 (高偏差，极低方差)：$<span class="arithmatex">\(G_{t}^{(1)} = R_{t+1} + \gamma V(S_{t+1})\)</span>$TD 极其短视。它只往前真实地走一步，拿到真实的 <span class="arithmatex">\(R_{t+1}\)</span>，然后立刻用网络预估的 <span class="arithmatex">\(V(S_{t+1})\)</span> 来代替未来的所有奖励。因为它只经历了一步的随机性，所以方差极低，训练非常平稳。但代价是致命的：那个预估的 <span class="arithmatex">\(V\)</span> 在训练初期完全是瞎猜的，这引入了极大的偏差。</p>
+<h3 id="14">补充1.4权衡策略</h3>
+<p>如果 MC 太飘（高方差），单步 TD 太瞎（高偏差），我们该怎么办？强化学习给出了两种极其优雅的解决方案：
+- <span class="arithmatex">\(n\)</span> 步时序差分 (<span class="arithmatex">\(n\)</span>-step TD)：既然走 1 步偏差大，走到底方差大，那我们就走 <span class="arithmatex">\(n\)</span> 步！$<span class="arithmatex">\(G_{t}^{(n)} = R_{t+1} + \gamma R_{t+2} + \dots + \gamma^{n-1} R_{t+n} + \gamma^n V(S_{t+n})\)</span>$通过调节 <span class="arithmatex">\(n\)</span> 的大小，我们可以在方差和偏差之间找到一个最适合当前任务的甜点 (Sweet Spot)。
+- 指数加权平均：这是【九、GAE (Generalized Advantage Estimation)】的内容。GAE 并没有死板地选择某一个 <span class="arithmatex">\(n\)</span>，而是利用一个超参数 <span class="arithmatex">\(\lambda\)</span>，把 1 步、2 步、一直到无穷步的估计值做了一个极其精妙的指数加权求和，近乎完美地解决了方差与偏差的权衡问题。这是目前所有主流大模型 RLHF 算法背后的核心支柱。</p>
+<h1 id="td-learning">三、TD Learning</h1>
+<h2 id="4temporal-difference">4.Temporal Difference</h2>
+<h3 id="41">4.1核心思想</h3>
+<p>在蒙特卡洛方法中，我们面临的最大痛点是“必须死等”：只能等一条轨迹走到尽头（回合结束），拿到真实的最终回报 <span class="arithmatex">\(G_t\)</span>，才能回头更新途经状态的价值。对于没有终点的连续任务，MC 直接束手无策。时序差分的直觉极其符合人类的学习模式：用下一步的预期来修正当前的预期。比如你预测明天会下雨（状态 <span class="arithmatex">\(S_t\)</span>），到了明天真的下雨了，并预测后天依然下雨（状态 <span class="arithmatex">\(S_{t+1}\)</span>）。你不需要等一整年过完再去评估你昨天的预测水平，你“明天”一过完，有了明天的实际天气和对后天的新预测，就可以立刻修正昨天的判断。</p>
+<h3 id="42-td0">4.2 TD(0)的数学表达</h3>
+<p>我们直接来看最基础的单步时序差分，也就是TD(0)的价值更新公式:
+$<span class="arithmatex">\(V(S_t) \leftarrow V(S_t) + \alpha \left[ R_{t+1} + \gamma V(S_{t+1}) - V(S_t) \right]\)</span>$
+我们进一步来解析一下这个方程：
+- <span class="arithmatex">\(V(S_t)\)</span> (当前估计)： 我们在状态 <span class="arithmatex">\(S_t\)</span> 时，对当前价值的旧认知。
+- <span class="arithmatex">\(\alpha\)</span> (学习率/步长)： 决定了我们有多相信这次的新经验。
+- <span class="arithmatex">\(R_{t+1} + \gamma V(S_{t+1})\)</span> (TD Target / TD 目标)： 这是整个公式的灵魂。我们走了一步，拿到了真实的即时奖励 <span class="arithmatex">\(R_{t+1}\)</span>，但这只是一小部分收益。剩下的无尽未来怎么办？我们不跑到底了，而是直接用网络当前对下一个状态的估值 <span class="arithmatex">\(V(S_{t+1})\)</span> 打个折 <span class="arithmatex">\(\gamma\)</span> 来代替未来的所有奖励。这本质上就是贝尔曼方程的截断应用。
+- <span class="arithmatex">\(R_{t+1} + \gamma V(S_{t+1}) - V(S_t)\)</span> (TD Error / TD 误差，通常记为 <span class="arithmatex">\(\delta_t\)</span>)： 它代表了“现实的惊喜（或惊吓）”。它衡量的是“我们走了一步之后看到的价值”与“我们在原地估算的价值”之间的差异。如果 <span class="arithmatex">\(\delta_t &gt; 0\)</span>，说明我们低估了 <span class="arithmatex">\(S_t\)</span>，应该调高它的价值；反之亦然。</p>
+<h3 id="43">4.3 采样和自举</h3>
+<p>TD继承了 MC 的 Sampling（无模型）：不需要知道环境的转移矩阵 <span class="arithmatex">\(P(s'|s,a)\)</span>，直接在环境中走一步，拿到实际的 <span class="arithmatex">\(R_{t+1}\)</span> 和 <span class="arithmatex">\(S_{t+1}\)</span>。所以它是 Model-Free 的。也有DP 的 Bootstrapping（自举）：什么是自举？就是“用自己的估计去更新自己的估计”。TD 不需要等到终点拿真实的 <span class="arithmatex">\(G_t\)</span>，而是用自己预估的 <span class="arithmatex">\(V(S_{t+1})\)</span> 去更新 <span class="arithmatex">\(V(S_t)\)</span>。</p>
+<h3 id="44">4.4 回归方差与偏差</h3>
+<ul>
+<li>MC 无偏但高方差： 等到底，噪音太大。</li>
+<li>TD 有偏但低方差： 因为用到了预估的 <span class="arithmatex">\(V(S_{t+1})\)</span>，在训练初期这个预估完全是瞎猜，所以带来了偏差（Bias）。但是，因为它只走了一步，只经历了一次环境和策略的随机性，它的方差（Variance）极低。</li>
+</ul>
+<p>事实证明，在大多数复杂的现实工程中，降低方差带来的收益，远远大于引入偏差带来的代价。TD 的平稳性使得它在神经网络（即后面的 Deep RL）中极其吃香，因为神经网络极其讨厌高方差的剧烈震荡。</p>
+<h1 id="q-learing">四、Q Learing体系</h1>
+<p>在之前,我们讲到过只有<span class="arithmatex">\(V(s)\)</span> 是不够的。为了在未知的环境中做出决策，我们必须把 TD 的思想武装到动作价值函数 <span class="arithmatex">\(Q(s, a)\)</span> 上。而这九十强化学习历史最经典的两大控制算法：SARSA 和 Q-Learning。它们标志着强化学习真正具备了在复杂环境中独立学习策略的能力。</p>
+<p>在讲解具体算法之前，我们需要明确一个核心概念：同策略 (On-policy) 与 异策略 (Off-policy)。
+- 行动策略 (Behavior Policy)： 智能体在环境中四处游荡、收集数据时实际使用的策略（通常包含随机探索，比如 <span class="arithmatex">\(\epsilon\)</span>-greedy）。
+- 目标策略 (Target Policy)： 智能体真正在学习、想要优化的那个策略。</p>
+<p>如果这俩是同一个策略，就是同策略；如果智能体能“看着别人犯错（或自己随机探索）来优化一个更完美的策略”，这就是异策略。</p>
+<h2 id="5sarsa">5.SARSA</h2>
+<p>SARSA算法是经典的同策略算法,他的算法精髓完全写在了它的名字里:<span class="arithmatex">\(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1}\)</span>。</p>
+<h3 id="51">5.1核心思想</h3>
+<p>SARSA是一种纯粹的On-policy算法。它的算法逻辑是：我怎么走的，我就怎么学。智能体使用 <span class="arithmatex">\(\epsilon\)</span>-greedy 策略在环境中走了一步，从状态 <span class="arithmatex">\(S_t\)</span> 执行动作 <span class="arithmatex">\(A_t\)</span>，拿到了奖励 <span class="arithmatex">\(R_{t+1}\)</span>，进入了新状态 <span class="arithmatex">\(S_{t+1}\)</span>。到了新状态后，它再次使用现有的 <span class="arithmatex">\(\epsilon\)</span>-greedy 策略抽样出一个下一步的动作 <span class="arithmatex">\(A_{t+1}\)</span>。拿到这五个值之后，它直接套用 TD(0) 的思想来更新当前的 <span class="arithmatex">\(Q\)</span> 值：$<span class="arithmatex">\(Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t) \right]\)</span>$</p>
+<h3 id="52">5.2 特点</h3>
+<p>因为 SARSA 在计算 TD 目标时，使用的是真实采样出来的 <span class="arithmatex">\(A_{t+1}\)</span>，这就意味着它把“探索带来的随机性（甚至可能掉下悬崖的风险）”也算进了未来的期望里。因此，SARSA 学出来的策略通常非常保守和安全，它会主动刻意地远离危险区域。</p>
+<h2 id="6q-learning">6.Q-Learning</h2>
+<h3 id="61">6.1核心思想</h3>
+<p>Q-Learning 是一种异策略 (Off-policy) 算法。它的哲学是：不管我刚才怎么瞎走的，我评估未来时，只看最优的可能。前半部分一样：智能体依然用 <span class="arithmatex">\(\epsilon\)</span>-greedy 策略（行动策略）走了一步，拿到了 <span class="arithmatex">\(S_t, A_t, R_{t+1}, S_{t+1}\)</span>。但到了计算 TD 目标的时候，Q-Learning 不去采样 <span class="arithmatex">\(A_{t+1}\)</span>，而是直接在这个状态的所有可用动作里，暴力地取一个 <span class="arithmatex">\(\max\)</span>：$<span class="arithmatex">\(Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma \max_{a} Q(S_{t+1}, a) - Q(S_t, A_t) \right]\)</span>$</p>
+<h3 id="62">6.2 数学本质</h3>
+<p>Q-Learning相当于强行注入贝尔曼最优方程。我们在第一章讨论贝尔曼最优方程时提到的那个“极具破坏性的非线性算子 <span class="arithmatex">\(\max_a\)</span>”吗？Q-Learning 本质上就是把贝尔曼最优方程直接塞进了 TD 的更新目标里！那个 <span class="arithmatex">\(\max_a Q(S_{t+1}, a)\)</span> 代表着：我假设从下一步开始，智能体将完全遵循绝对理性的贪婪策略（目标策略）。它硬生生地切断了“行动策略的随机探索”对“价值评估”的影响。这种能力极其强大，意味着 Q-Learning 可以从完全随机的历史数据、甚至别人玩游戏的录像中，学习到最优策略。</p>
+<h3 id="63">6.3 特点</h3>
+<p>Q-Learning 非常激进。它只盯着最优解，哪怕最优路径旁边就是万丈深渊，只要最优动作本身没有掉下去，它就会认为这条路价值极高。</p>
+<p>此外，那个 <span class="arithmatex">\(\max\)</span> 操作会带来一个著名的数学副作用：高估偏差 (Overestimation Bias)。由于 <span class="arithmatex">\(Q\)</span> 值在初期是存在估计误差的，<span class="arithmatex">\(\max\)</span> 操作总是倾向于选中那些恰好被高估的噪声，导致整体的 <span class="arithmatex">\(Q\)</span> 值偏高。（这也是后续深度强化学习中 Double DQN 要解决的核心痛点）。</p>
+<h1 id="_5">五、函数逼近</h1>
+<p>前面的内容在数学上很理想，但是在工程上难以实现，因为我们一直默认可以使用一个二维表格 (Table) 来记录每一个状态 <span class="arithmatex">\(s\)</span> 或者状态-动作对 <span class="arithmatex">\((s, a)\)</span> 的价值。但现实世界的残酷在于“维度灾难” (Curse of Dimensionality)。在实际的工程和科研中，状态空间往往是连续且极其高维的。例如，输入数据可能是一组包含时序动态信息的 3D 骨架关键点序列，或者是一张存在低信噪比特征的复杂影像。如果用表格来记录这些连续矩阵中每一个微小变化的价值，内存会瞬间爆炸，且算法永远无法遍历所有的状态去完成收敛。为了打破维度灾难，我们必须引入泛化能力，这就是这一章的内容:函数逼近。</p>
+<h2 id="7function-approximation">7.Function Approximation</h2>
+<h3 id="71">7.1核心思想</h3>
+<p>既然不能把所有的<span class="arithmatex">\(V(s)\)</span> 或 <span class="arithmatex">\(Q(s,a)\)</span> 都存下来，我们能不能用一个带参数的数学函数来拟合它们？假设我们有一个参数向量 <span class="arithmatex">\(\theta\)</span>（在深度学习时代，这就是神经网络的权重），我们让：$<span class="arithmatex">\(V_\theta(s) \approx V^\pi(s)\)</span>$$<span class="arithmatex">\(Q_\theta(s, a) \approx Q^\pi(s, a)\)</span>$这样，不管状态空间 <span class="arithmatex">\(s\)</span> 有多大（哪怕是几百万像素的高维矩阵），我们只需要更新和保存固定维度的参数 <span class="arithmatex">\(\theta\)</span> 即可。更重要的是，它赋予了智能体泛化 (Generalization) 能力：如果两个状态在特征空间上很接近（比如两组极度相似的骨架动作），神经网络算出的 <span class="arithmatex">\(V\)</span> 值也会很接近。智能体终于可以对“从未见过的状态”做出合理的价值评估了。</p>
+<h3 id="72">7.2监督学习</h3>
+<p>一旦引入了参数 <span class="arithmatex">\(\theta\)</span>，寻找最优价值函数的过程，就立刻变成了一个标准的机器学习优化问题。我们需要定义一个目标函数（通常是均方误差 MSE），来衡量我们当前的近似价值 <span class="arithmatex">\(V_\theta(s)\)</span> 与真实的“目标价值”之间的差距：$<span class="arithmatex">\(J(\theta) = \mathbb{E}_\pi \left[ \frac{1}{2} (Target - V_\theta(S_t))^2 \right]\)</span>$根据梯度下降法（Gradient Descent），我们要沿着梯度的反方向更新参数 <span class="arithmatex">\(\theta\)</span>，以最小化这个误差：$<span class="arithmatex">\(\theta_{t+1} = \theta_t - \alpha \nabla_\theta J(\theta_t)\)</span><span class="arithmatex">\(求导后，我们得到了极其核心的参数更新公式：\)</span><span class="arithmatex">\(\theta_{t+1} = \theta_t + \alpha \left[ Target - V_\theta(S_t) \right] \nabla_\theta V_\theta(S_t)\)</span>$</p>
+<h3 id="73target">7.3Target</h3>
+<p>在上面的公式中，那个神秘的 <span class="arithmatex">\(Target\)</span> 到底是什么？这取决于我们使用前几章的哪种算法：
+- 如果结合 Monte Carlo： <span class="arithmatex">\(Target = G_t\)</span> （真实累积回报）。此时是无偏估计，但方差很大。
+- 如果结合 TD(0)： <span class="arithmatex">\(Target = R_{t+1} + \gamma V_\theta(S_{t+1})\)</span>。此时变成了有偏估计，但方差小。
+    - 注意： 这里产生了一个数学上的“骚操作”——半梯度下降 (Semi-gradient)。因为 <span class="arithmatex">\(Target\)</span> 里也包含了需要优化的参数 <span class="arithmatex">\(\theta\)</span>（即 <span class="arithmatex">\(V_\theta(S_{t+1})\)</span>），但我们在求导时，人为地忽略了 <span class="arithmatex">\(Target\)</span> 对 <span class="arithmatex">\(\theta\)</span> 的梯度，只对后面的 <span class="arithmatex">\(V_\theta(S_t)\)</span> 求导。这就叫 Bootstrapping（自举）在函数逼近中的妥协。</p>
+<h3 id="74">7.4致命三角</h3>
+<p>把神经网络（函数逼近）引入强化学习听起来非常完美，但强化学习的先驱们很快就发现了一个噩梦般的现象：网络极容易发散，损失函数直接爆炸到 NaN。</p>
+<p>学者们总结出了导致 RL 训练彻底崩溃的“致命三要素”。当以下三者同时存在时，价值函数的更新将失去理论上的收敛保证，极度不稳定：</p>
+<ul>
+<li>
+<p>Function Approximation (函数逼近)： 使用了神经网络等参数化方法拟合价值。</p>
+</li>
+<li>
+<p>Bootstrapping (自举)： 像 TD Learning 一样，用当前的估计去更新当前的估计（不走到回合结束）。</p>
+</li>
+<li>
+<p>Off-policy (异策略) 训练： 行动策略和目标策略不同，比如 Q-Learning。</p>
+</li>
+</ul>
+<p>这直接宣判了：如果我们简单粗暴地把神经网络和 Q-Learning 结合起来（这就集齐了三要素），模型大概率会崩溃，而第一个解决这个问题的就是DQN。</p>
+<h1 id="deep-rl">六、Deep RL</h1>
+<h2 id="8dqn">8.DQN</h2>
+<h3 id="81">8.1困境</h3>
+<p>上一章我们提到，如果直接用神经网络 <span class="arithmatex">\(Q_\theta(s, a)\)</span> 去替换 Q-Table，并使用 Q-Learning 的公式更新，网络会极度不稳定甚至发散。原因有两个物理层面和数学层面的深层冲突：
+- 数据的强相关性 (Correlated Data)： 深度学习（如图像分类）有一个底层假设：训练数据必须是独立同分布 (i.i.d.) 的。但在强化学习中，智能体是在时序中采集数据的（比如 <span class="arithmatex">\(S_t, S_{t+1}, S_{t+2}\)</span>）。这些数据在时间上高度关联。如果直接把这种序列喂给神经网络，它会迅速“过拟合”到当前的局部轨迹中，导致灾难性遗忘。
+- 移动的靶子 (Moving Target)： Q-Learning 的更新目标是 <span class="arithmatex">\(Target = R_{t+1} + \gamma \max_a Q_\theta(S_{t+1}, a)\)</span>。在这个公式里，我们要拟合的目标（Target）本身也包含了当前正在更新的神经网络参数 <span class="arithmatex">\(\theta\)</span>。这就好比“一条狗在疯狂追咬自己的尾巴”，每一次你更新参数 <span class="arithmatex">\(\theta\)</span> 让预测逼近目标，目标自己也跟着跑了，导致 Loss 疯狂震荡。为了解决这两个致命缺陷，DQN 引入了两大神级机制。</p>
+<h3 id="82">8.2 机制一：经验回放</h3>
+<p>为了打破时序数据的强相关性，DQN 构建了一个巨大的“记忆库”（Replay Buffer）。
+- 做法： 智能体在环境中交互时，每走一步，就把这个四元组 <span class="arithmatex">\((S_t, A_t, R_{t+1}, S_{t+1})\)</span> 作为一个记忆碎片，塞进容量为 <span class="arithmatex">\(N\)</span>（比如 100 万）的经验池中。
+- 训练： 神经网络不吃刚采集到的新鲜数据，而是每次从经验池中随机打乱，抽取一个小批量（Mini-batch）进行梯度下降。
+- 深远意义： 经验回放机制不仅瞬间打破了数据的时序相关性，满足了神经网络对独立同分布的要求；还让过去的经验得以被多次复用（Data Efficiency），极大地提高了采样的利用率。</p>
+<h3 id="83">8.3 机制二：目标网络</h3>
+<p>为了解决“移动靶”的问题，DQN 强行把狗的尾巴钉死在了墙上。
+- 做法： DQN 不再只有一个神经网络，而是同时维护两个结构完全相同的神经网络：
+    - 预测网络 (Prediction Network, <span class="arithmatex">\(\theta\)</span>)： 每次迭代都在更新参数，负责在当前状态下输出 <span class="arithmatex">\(Q\)</span> 值，并主导行动。
+    - 目标网络 (Target Network, <span class="arithmatex">\(\theta^-\)</span>)： 参数被冻结（不参与梯度下降）。它唯一的作用就是用来计算 TD Target。
+- 数学表达： 此时的 TD 目标变成了：$<span class="arithmatex">\(Target = R_{t+1} + \gamma \max_{a'} Q(S_{t+1}, a'; \theta^-)\)</span>$
+- 同步机制： 目标网络 <span class="arithmatex">\(\theta^-\)</span> 会保持不动，直到主网络 <span class="arithmatex">\(\theta\)</span> 更新了 <span class="arithmatex">\(C\)</span> 步（比如 1000 步）之后，再把 <span class="arithmatex">\(\theta\)</span> 的参数硬拷贝给 <span class="arithmatex">\(\theta^-\)</span>。这种“延迟更新”提供了一个稳定的学习目标，极大地抑制了价值评估的震荡。</p>
+<h3 id="84-dqn-loss-function">8.4 DQN 的完整损失函数 (Loss Function)</h3>
+<p>结合了经验回放和目标网络，DQN 把强化学习彻底变成了一个用均方误差（MSE）优化的监督学习问题。它的损失函数极其优美：$<span class="arithmatex">\(L(\theta) = \mathbb{E}_{(s,a,r,s') \sim U(D)} \left[ \left( r + \gamma \max_{a'} Q(s', a'; \theta^-) - Q(s, a; \theta) \right)^2 \right]\)</span><span class="arithmatex">\(其中，\)</span>U(D)$ 表示从经验池 <span class="arithmatex">\(D\)</span> 中均匀随机采样。我们只需要对这个 Loss 求梯度 <span class="arithmatex">\(\nabla_\theta L(\theta)\)</span>，即可更新网络。</p>
+<h3 id="85-dqn">8.5 DQN 的衍生与补丁</h3>
+<p>DQN 虽然伟大，但它继承了 Q-Learning 的一个胎里带的毛病：高估偏差 (Overestimation)。那个粗暴的 <span class="arithmatex">\(\max_{a'}\)</span> 操作总是会捕获到被高估的噪声。</p>
+<p>这催生了后来的 Double DQN (DDQN)：把“选择动作”和“评估价值”这两步解耦。主网络负责选出最优动作，目标网络负责评估这个动作的价值，从而有效消除了高估。加上优先经验回放（PER）、对决网络（Dueling DQN）等，最终构成了统治离散动作空间的 Rainbow DQN 体系。</p>
+<p>然而，DQN 的输出层有几个神经元，就代表有几个离散的动作（比如上下左右）。</p>
+<p>如果我们要控制一辆自动驾驶汽车，方向盘的转角是一个 <span class="arithmatex">\([ -90^\circ, 90^\circ ]\)</span> 的连续实数，DQN 此时还能奏效吗？ 显然不能，因为我们无法在无限个连续动作中去求 <span class="arithmatex">\(\max_a\)</span>。</p>
+<p>这就宣告了基于价值（Value-based）的方法在连续动作空间上的破产。我们必须转换视角，不再去拟合 <span class="arithmatex">\(Q\)</span> 值，而是直接去拟合“策略”本身。</p>
+<h1 id="_6">七、策略梯度</h1>
+<p>在DQN及其变体中，我们所有的努力都在做一件事：猜价值（拟合 <span class="arithmatex">\(Q\)</span> 值）。只要 <span class="arithmatex">\(Q\)</span> 值猜得准，我们就可以在当前状态下遍历所有动作，选那个 <span class="arithmatex">\(Q\)</span> 值最大的。但这种基于价值的路线有两个致命的缺陷:
+- 无法处理连续动作空间：如果动作是离散的（比如上下左右），求 <span class="arithmatex">\(\max_a\)</span> 很容易。但如果动作是连续的呢？比如自动驾驶中方向盘的转向角度，或者在超声图像分析等医疗辅助任务中，让智能体控制探头微调的连续坐标。面对无限个连续的实数，我们根本无法遍历求 <span class="arithmatex">\(\max\)</span>。
+- 无法学习随机策略： 很多时候最优策略并不是确定性的（比如猜拳游戏，如果你总是出石头，对手马上就能击败你；最优策略是各三分之一概率出）。DQN 这种贪婪策略永远学不会“随机应变”。</p>
+<p>为例解决这些问题，我们绕过Q值，直接让神经网络输出策略，这就是策略梯度。</p>
+<h2 id="9policy-gradient">9.Policy Gradient</h2>
+<h3 id="91">9.1核心思想（直接参数化策略）</h3>
+<p>我们现在构建一个神经网络，参数为 <span class="arithmatex">\(\theta\)</span>。它的输入依然是状态 <span class="arithmatex">\(s\)</span>，但它的输出不再是价值，而是策略 <span class="arithmatex">\(\pi_\theta(a|s)\)</span>。
+- 如果是离散动作：网络最后一层用 Softmax，输出各个动作的概率分布。
+- 如果是连续动作：网络可以输出一个高斯分布的均值 <span class="arithmatex">\(\mu\)</span> 和标准差 <span class="arithmatex">\(\sigma\)</span>，智能体根据这个连续的概率密度函数去采样具体数值。</p>
+<h3 id="92">9.2目标函数</h3>
+<p>在 DQN 里，目标是最小化 <span class="arithmatex">\(Q\)</span> 值的预测误差 (MSE)。但在策略梯度中，我们的目标极其纯粹：最大化智能体在环境里能拿到的总期望回报。我们定义目标函数 <span class="arithmatex">\(J(\theta)\)</span>：$<span class="arithmatex">\(J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \left[ R(\tau) \right]\)</span><span class="arithmatex">\(其中，\)</span>\tau$ 是智能体跑完一整局的轨迹（Trajectory），<span class="arithmatex">\(R(\tau)\)</span> 是这条轨迹的总回报。我们的任务，就是找到一个最好的参数 <span class="arithmatex">\(\theta\)</span>，让 <span class="arithmatex">\(J(\theta)\)</span> 最大化。既然是最大化，我们就顺着梯度往上爬，使用梯度上升法 (Gradient Ascent)：$<span class="arithmatex">\(\theta \leftarrow \theta + \alpha \nabla_\theta J(\theta)\)</span>$</p>
+<h3 id="93">9.3 对数导数技巧</h3>
+<p>现在遇到了整个策略梯度中最核心的数学难点：如何对期望求梯度 <span class="arithmatex">\(\nabla_\theta J(\theta)\)</span>？由于期望的概率分布 <span class="arithmatex">\(\pi_\theta\)</span> 本身就包含了我们要优化的参数 <span class="arithmatex">\(\theta\)</span>，直接求导非常困难。这里科学家们使用了一个极其漂亮的数学技巧：$<span class="arithmatex">\(\nabla_\theta p(x) = p(x) \frac{\nabla_\theta p(x)}{p(x)} = p(x) \nabla_\theta \log p(x)\)</span>$利用这个技巧，我们可以把复杂的梯度推导化简为一个可以在实际数据中采样的公式：
+$<span class="arithmatex">\(\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_{t=0}^T \nabla_\theta \log \pi_\theta(A_t|S_t) \cdot G_t \right]\)</span>$
+在这个公式中:
+- <span class="arithmatex">\(\nabla_\theta \log \pi_\theta(A_t|S_t)\)</span>：表示“提高当前动作发生概率的方向”。
+- <span class="arithmatex">\(G_t\)</span>：是从当前时刻 <span class="arithmatex">\(t\)</span> 开始，到回合结束的真实累积回报（这就是第二章蒙特卡洛里的那个 <span class="arithmatex">\(G_t\)</span>）。</p>
+<h3 id="94-reinforce">9.4 REINFORCE</h3>
+<p>利用上述的梯度公式，我们就得到了策略梯度最古老、最基础的算法——REINFORCE。它的流程极其直白：
+- 用当前策略 <span class="arithmatex">\(\pi_\theta\)</span> 跑完一整个回合，收集一条轨迹数据。
+- 计算每个时刻的真实回报 <span class="arithmatex">\(G_t\)</span>。
+- 把 <span class="arithmatex">\(G_t\)</span> 和网络输出的对数梯度相乘，更新网络参数 <span class="arithmatex">\(\theta\)</span>。
+- 丢弃刚刚收集的数据，重复上述过程。</p>
+<h3 id="95">9.5策略梯度的巨大缺陷</h3>
+<p>直接优化策略，能处理连续动作。但在实际工程中，原味的 REINFORCE 几乎不可用，原因恰好与我们之前探讨过的概念完美呼应：
+- 方差极其恐怖 (High Variance)：回想我们在第二、三章讨论的方差与偏差权衡。REINFORCE 使用的是蒙特卡洛回报 <span class="arithmatex">\(G_t\)</span>！一条轨迹可能有上千步，累积了无数的随机性，导致 <span class="arithmatex">\(G_t\)</span> 忽高忽低。这就导致神经网络在更新时，一会向左猛打方向盘，一会向右猛打，梯度震荡极其严重，极难收敛。
+- 极度的数据低效 (Sample Inefficiency)：策略梯度的期望 <span class="arithmatex">\(\mathbb{E}_{\tau \sim \pi_\theta}\)</span> 是建立在当前策略的基础上的（严格的 On-policy）。这意味着，你用参数 <span class="arithmatex">\(\theta_{old}\)</span> 收集的数据，在更新了一次参数变成 <span class="arithmatex">\(\theta_{new}\)</span> 之后，那些数据就完全作废了，必须扔掉重新去环境里采样。这与 DQN 那种可以反复白嫖经验池（Replay Buffer）的爽快感形成了鲜明对比。</p>
+<p>走到这里，我们遇到了一个两难的困境：
+- DQN 采样效率高，方差小（用了 TD），但搞不定连续动作。
+- 策略梯度搞定了连续动作，但方差极大，数据利用率极低。</p>
+<p>有没有办法把这两个不同世界的顶级天赋融合在一起？用策略梯度的方法去选动作，用 DQN 猜价值的方法去降低方差？这就直接引出了大纲的下一章，强化学习最主流、最宏大的架构体系：【八、Actor-Critic】。</p>
+<h1 id="actor-critic">八、Actor-Critic</h1>
+<h2 id="10actor-critic">10.Actor-Critic</h2>
+<h2 id="101">10.1 核心思想</h2>
+<p>Actor-Critic架构包含两个神经网络：
+- Actor (演员网络, 参数为 <span class="arithmatex">\(\theta\)</span>)：它的任务是“做事”。输入状态 <span class="arithmatex">\(S_t\)</span>，输出策略 <span class="arithmatex">\(\pi_\theta(a|S_t)\)</span>（即动作的概率分布）。它继承了策略梯度的血脉，能够处理连续动作。
+- Critic (评论家网络, 参数为 <span class="arithmatex">\(\phi\)</span>)：它的任务是“打分”。输入状态 <span class="arithmatex">\(S_t\)</span>，输出状态的预估价值 <span class="arithmatex">\(V_\phi(S_t)\)</span>。它继承了 TD Learning（如 Q-Learning）的血脉，用单步自举来替代高方差的蒙特卡洛回报。</p>
+<p>在学习过程中，Actor根据学习到的动作概率分布去做动作，Actor每做一个动作，Critic便根据自己学习到的价值网络给出反馈，Actor根据这个价值反馈调整下一次策略。</p>
+<h2 id="102">10.2 数学演进</h2>
+<p>我们回到上一章策略梯度的核心更新公式：$<span class="arithmatex">\(\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_{t=0}^T \nabla_\theta \log \pi_\theta(A_t|S_t) \cdot G_t \right]\)</span>$
+这个公式最大的弊端就是<span class="arithmatex">\(G_t\)</span>(高方差)。在Actor-Critic中，我们决定用Critic网络的输出来替换掉<span class="arithmatex">\(G_t\)</span></p>
+<ul>
+<li>第一步：引入 Q 评论家 (Q Actor-Critic)<ul>
+<li>最直观的想法是，既然 <span class="arithmatex">\(G_t\)</span> 是动作价值的蒙特卡洛采样，我们干脆训练一个 Critic 输出 <span class="arithmatex">\(Q_w(s,a)\)</span> 来代替 <span class="arithmatex">\(G_t\)</span>：$<span class="arithmatex">\(\nabla_\theta J(\theta) \approx \mathbb{E} \left[ \nabla_\theta \log \pi_\theta(A_t|S_t) \cdot Q_w(S_t, A_t) \right]\)</span>$但这并没有完全解决问题，因为绝对的 <span class="arithmatex">\(Q\)</span> 值依然可能波动很大（基线问题）。</li>
+</ul>
+</li>
+<li>第二步：引入优势函数(Advantage)<ul>
+<li>回想我们在第一章补充的优势函数 <span class="arithmatex">\(A(s, a)\)</span>！$<span class="arithmatex">\(A^\pi(s, a) = Q^\pi(s, a) - V^\pi(s)\)</span>$它衡量的是“采取动作 <span class="arithmatex">\(a\)</span> 比当前状态的平均水平好多少”。如果我们在公式里用 <span class="arithmatex">\(A(s,a)\)</span> 代替 <span class="arithmatex">\(Q(s,a)\)</span>，就能极大地缩小数值波动的范围，从而进一步降低方差。这就是著名的 A2C (Advantage Actor-Critic)。</li>
+</ul>
+</li>
+<li>第三步：用TD Error逼近Advantage<ul>
+<li>如果要算 <span class="arithmatex">\(A(s,a) = Q(s,a) - V(s)\)</span>，难道我们要训练两个 Critic 网络（一个算 Q，一个算 V）吗？不需要。我们回想一下第三章时序差分中的 TD 误差 (TD Error, <span class="arithmatex">\(\delta_t\)</span>)：$<span class="arithmatex">\(\delta_t = R_{t+1} + \gamma V_\phi(S_{t+1}) - V_\phi(S_t)\)</span><span class="arithmatex">\(神奇的数学巧合出现了：在期望的意义上，\)</span>R_{t+1} + \gamma V(S_{t+1})$ 就是 <span class="arithmatex">\(Q(S_t, A_t)\)</span>！也就是说，TD Error <span class="arithmatex">\(\delta_t\)</span> 恰好就是优势函数 <span class="arithmatex">\(A(S_t, A_t)\)</span> 的一个无偏估计！于是，Actor 最终的更新梯度变成了极其优雅的形态：$<span class="arithmatex">\(\nabla_\theta J(\theta) \approx \mathbb{E} \left[ \nabla_\theta \log \pi_\theta(A_t|S_t) \cdot \delta_t \right]\)</span>$</li>
+</ul>
+</li>
+</ul>
+<h2 id="103-a2c">10.3 算法的完整运转逻辑（A2C）</h2>
+<p>现在，我们只需要一个 Actor 网络（参数 <span class="arithmatex">\(\theta\)</span>）和一个 Critic 网络（参数 <span class="arithmatex">\(\phi\)</span>）。它们通常会共享底层的特征提取层。智能体在环境中每走一步（从 <span class="arithmatex">\(S_t\)</span> 执行 <span class="arithmatex">\(A_t\)</span> 到达 <span class="arithmatex">\(S_{t+1}\)</span>，获得 <span class="arithmatex">\(R_{t+1}\)</span>），网络就会进行一次双向更新：
+- Critic 更新 (TD Learning)：
+    - 计算 TD 目标：<span class="arithmatex">\(Target = R_{t+1} + \gamma V_\phi(S_{t+1})\)</span>
+    - 计算 TD 误差：<span class="arithmatex">\(\delta_t = Target - V_\phi(S_t)\)</span>
+    - Critic 的目标是让自己的预测更准，所以使用 MSE 损失：$<span class="arithmatex">\(Loss_{Critic} = \delta_t^2\)</span>$向后传播更新 <span class="arithmatex">\(\phi\)</span>。
+- Actor 更新 (Policy Gradient)：
+    - Actor 拿到 Critic 算出的 <span class="arithmatex">\(\delta_t\)</span>（这就好比教练给的评分：正数代表超常发挥，负数代表表现拉胯）。
+    - Actor 利用这个评分来更新策略：$<span class="arithmatex">\(Loss_{Actor} = -\log \pi_\theta(A_t|S_t) \cdot \delta_t\)</span>$(注：加负号是因为我们要使用深度学习框架的梯度下降来实现梯度上升)向后传播更新 <span class="arithmatex">\(\theta\)</span>。</p>
+<h2 id="104">10.4 新的问题：偏差</h2>
+<p>Actor-Critic 极其强大，它几乎是现代连续控制任务的标配。但由于它是一个融合体，它也继承了融合带来的新问题。</p>
+<p>既然 Critic 用了 TD 算法的“自举”（用 <span class="arithmatex">\(V(S_{t+1})\)</span> 估算 <span class="arithmatex">\(V(S_t)\)</span>），这就意味着 Critic 是有偏差（Bias）的。在训练初期，Critic 完全是在胡说八道。而 Actor 又是完全听从 Critic 的指挥（<span class="arithmatex">\(\delta_t\)</span>）来更新策略的。如果教练（Critic）本身就是个外行，瞎指挥，孩子（Actor）就会朝着错误的方向狂奔。加上神经网络本身的非线性，这种“偏差的累积”很容易导致训练崩溃。</p>
+<p>我们辛辛苦苦用 Critic 降低了策略梯度的方差，却又引来了自举带来的偏差。方差与偏差的天平再次倾斜。</p>
+<h1 id="gae">九、GAE</h1>
+<h2 id="11generalized-advantage-estimation">11.Generalized Advantage Estimation</h2>
+<h3 id="111">11.1核心思想</h3>
+<p>回想我们在第八章定义的单步 TD 误差（也是单步优势函数的估计）：
+$<span class="arithmatex">\(\delta_t = R_{t+1} + \gamma V(S_{t+1}) - V(S_t)\)</span>$
+既然走 1 步有偏差，走到终点有方差，那我们能不能定义走 2 步的优势？
+$<span class="arithmatex">\(\hat{A}_t^{(2)} = \delta_t + \gamma \delta_{t+1}\)</span>$
+展开后<span class="arithmatex">\(V(S_{t+1})\)</span> 被抵消了，只剩下了真实奖励和两步后的预估价值。以此类推，我们可以定义走 <span class="arithmatex">\(k\)</span> 步的优势函数估计 <span class="arithmatex">\(\hat{A}_t^{(k)}\)</span>。<span class="arithmatex">\(k\)</span> 越小，偏差越大（越依赖 Critic 的瞎猜）；<span class="arithmatex">\(k\)</span> 越大，方差越大（越依赖环境的真实随机奖励）。</p>
+<h3 id="112-lambda">11.2指数加权的魔法:参数 <span class="arithmatex">\(\lambda\)</span></h3>
+<p>GAE 的伟大之处在于，它没有生硬地选择某一个固定的 <span class="arithmatex">\(k\)</span>，而是把从 1 步到无穷步的所有优势函数全部加了起来，并赋予它们一个呈指数衰减的权重。</p>
+<p>它引入了一个介于 0 到 1 之间的超参数 <span class="arithmatex">\(\lambda\)</span> (衰减因子)，给出了 GAE 的终极公式：</p>
+<div class="arithmatex">\[\hat{A}_t^{GAE(\gamma, \lambda)} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l}\]</div>
+<p>这个公式看起来有些吓人，但它的工程实现其实就是一个极其简单的逆向递推式：$<span class="arithmatex">\(\hat{A}_t = \delta_t + \gamma \lambda \hat{A}_{t+1}\)</span>$（只要从回合的最后一步倒着往前算，几行代码就能搞定整个轨迹的GAE优势值）</p>
+<h3 id="113">11.3 两个极端的统一</h3>
+<p>通过调节 <span class="arithmatex">\(\lambda\)</span>，GAE 完美地统一了单步 TD 和纯粹的蒙特卡洛：取值数学坍缩结果物理意义优缺点<span class="arithmatex">\(\lambda = 0\)</span><span class="arithmatex">\(\hat{A}_t = \delta_t\)</span>退化为单步 TD Error高偏差，低方差（极度相信 Critic）<span class="arithmatex">\(\lambda = 1\)</span><span class="arithmatex">\(\hat{A}_t = \sum_{l=0}^\infty \gamma^l \delta_{t+l}\)</span>退化为带有基线 <span class="arithmatex">\(V(s)\)</span> 的蒙特卡洛回报零偏差，高方差（极度相信真实交互，不信 Critic）</p>
+<p>在实际的大模型训练或机器人控制中，我们通常将 <span class="arithmatex">\(\lambda\)</span> 设置为 0.95。这意味着我们既不想只看眼前的一步（降低偏差），又不希望过分受到遥远未来的随机噪声干扰（控制方差）。</p>
+<h3 id="114gae">11.4为什么GAE如此重要？</h3>
+<p>GAE 并不是一个独立的强化学习算法，它是 Actor-Critic 架构里的一个超级插件。</p>
+<p>如果没有 GAE，策略梯度在面对长序列任务时几乎是无法收敛的。正是因为有了 GAE 为 Actor 提供了极其稳定、低方差且低偏差的“打分信号”，后来的 TRPO 和 PPO 才能在这个坚实的基础上，去放心地做策略的大幅度更新。</p>
+<p>今天所有的 RLHF（大模型人类对齐）底层，无一例外都在使用 GAE。但是目前还有一个致命的缺点：如果 Actor 的参数更新了一大步，导致新策略瞬间崩溃，之前的经验就会全部作废。</p>
+<h1 id="trpo">十、TRPO</h1>
+<h2 id="12trust-region-policy-optimization">12.Trust Region Policy Optimization</h2>
+<h3 id="121">12.1 策略梯度问题</h3>
+<p>传统的策略梯度在更新参数时使用的都是最基础的一阶优化器(SGD或Adam):$<span class="arithmatex">\(\theta_{new} = \theta_{old} + \alpha \nabla_\theta J(\theta)\)</span>$</p>
+<p>这里有一个极度危险的参数:学习率 <span class="arithmatex">\(\alpha\)</span>（步长）。</p>
+<p>在监督学习中，如果学习率设大了，会导致loss震荡或者过拟合，我们可以调小学习率重跑。但是在强化学习中，数据是智能体自己通过当前策略 <span class="arithmatex">\(\pi_{old}\)</span> 收集来的。</p>
+<p>如果你步子迈得太大，导致更新出的新策略 <span class="arithmatex">\(\pi_{new}\)</span> 是个极度弱智的策略，那么智能体在下一轮去环境中收集数据时，就会拿到一堆彻头彻尾的垃圾数据。用垃圾数据再去更新策略，就会得到更垃圾的策略。</p>
+<p>这就叫策略崩溃 (Policy Collapse)。在 RL 中，一旦掉下悬崖，网络几乎不可能自己爬上来，这导致早期的 RL 算法训练极其依赖调参（玄学）。</p>
+<h3 id="122-on-policy-off-policy">12.2 重要性采样：从 On-policy 到微弱的 Off-policy</h3>
+<p>为了解决这个问题，TRPO首先引入了重要性采样。原先的策略梯度是严格的同策略，收集一批数据更新一次后就扔掉。TRPO 改变了目标函数的形态，引入了新旧策略的概率比值：</p>
+<div class="arithmatex">\[r_t(\theta) = \frac{\pi_\theta(a\vert{}s)}{\pi_{old}(a\vert{}s)}\]</div>
+<p>此时，替代目标函数 (Surrogate Objective) 变成了：</p>
+<div class="arithmatex">\[L^{IS}(\theta) = \mathbb{E}_{\pi_{old}} \left[ \frac{\pi_\theta(a\vert{}s)}{\pi_{old}(a\vert{}s)} \hat{A}_t \right]\]</div>
+<p>这意味只要新策略 <span class="arithmatex">\(\pi_\theta\)</span> 和收集数据的旧策略 <span class="arithmatex">\(\pi_{old}\)</span> 差异不大，我们就可以复用旧数据来评估新策略的好坏！但前提是：它们之间的差异必须被严格控制。</p>
+<h3 id="123-kl">12.3 KL散度和信任区域</h3>
+<p>KL散度专门用于衡量两个概率分布之间的差异，TRPO不再像以前那样毫无顾虑地顺着梯度往上爬，而是给自己画了一个“信任区域” (Trust Region)。它把策略优化变成了一个严谨的带约束的非线性规划问题：</p>
+<p>$<span class="arithmatex">\(\begin{aligned} \max_\theta \quad &amp; \mathbb{E} \left[ \frac{\pi_\theta(a\vert{}s)}{\pi_{old}(a\vert{}s)} \hat{A}_t \right] \\ \text{subject to} \quad &amp; \mathbb{E} \left[ D_{KL}(\pi_{old}(\cdot\vert{}s) \parallel \pi_\theta(\cdot\vert{}s)) \right] \le \delta \end{aligned}\)</span>$
+物理意义： 我要在保证“新策略分布与旧策略分布的 KL 散度不超过一个极小的阈值 <span class="arithmatex">\(\delta\)</span>（比如 0.01）”的前提下，最大化我的收益。这就是“信任区域”这个名字的由来——我只在这个安全的圈子里寻找最优解，绝不跨出圈外，从而彻底杜绝了策略崩溃。</p>
+<h3 id="124">12.4数学求解：自然梯度与费雪信息矩阵</h3>
+<p>问题在于：深度学习不支持直接带KL散度约束的反向传播。TRPO展现了极其硬核的数学功底，它利用泰勒展开 (Taylor Expansion) 对目标和约束进行了近似：
+- 对目标函数进行一阶泰勒展开，提取出梯度向量 <span class="arithmatex">\(g\)</span>。
+- 对 KL 散度约束进行二阶泰勒展开，提取出海森矩阵（Hessian Matrix，在这里它恰好等于统计学中的费雪信息矩阵 Fisher Information Matrix, <span class="arithmatex">\(F\)</span>）。</p>
+<p>经过拉格朗日乘子法的推导，TRPO 给出了参数更新的最佳方向——自然梯度</p>
+<div class="arithmatex">\[\Delta \theta = F^{-1} g\]</div>
+<p>随后，再通过线搜索 (Line Search) 在这个方向上找到满足KL约束的最大步长。</p>
+<h3 id="125trpo">12.5TRPO的伟大与致命局限</h3>
+<p>TRPO在数学上及其优美，它第一次在理论上保证了策略的单调递增（即每更新一次，策略一定比上一次好，或者至少不差）。这就把强化学习从玄学变成了一门严谨的科学。但是，它在工程上是一场灾难。
+计算费雪信息矩阵的逆矩阵 <span class="arithmatex">\(F^{-1}\)</span> 计算复杂度极高。如果你的神经网络有几百万个参数（这在今天的大模型中根本不值一提），<span class="arithmatex">\(F\)</span> 就是一个数百万乘数百万的超大矩阵，求逆的过程会让计算资源瞬间耗尽。即便 TRPO 用了共轭梯度法 (Conjugate Gradient) 来近似求解，计算开销依然极其庞大。</p>
+<p>而时代的下一个主角，就是Open AI 在 2017 年推出并沿用至今、直接统治了当今大模型 RLHF 时代的最终极算法：PPO(Proximal Policy Optimization)。</p>
+<h1 id="ppo">十一、PPO</h1>
+<h2 id="13proximal-policy-optimization">13.Proximal Policy Optimization</h2>
+<h3 id="131">13.1 核心思想</h3>
+<p>和TRPO一样，PPO依然采取了重要性采样的思想，也就是计算新策略和旧策略的概率比值:
+$<span class="arithmatex">\(r_t(\theta) = \frac{\pi_\theta(a\vert{}s)}{\pi_{old}(a\vert{}s)}\)</span>$
+PPO 的核心哲学是：鼓励新策略去朝着优势（Advantage）指明的方向更新，但是一旦新旧策略差异太大，就强制让梯度变成 0，停止更新。</p>
+<p>为了实现这一点，PPO 提出了强化学习历史上最著名的损失函数之一——Clipped Surrogate Objective (截断替代目标函数)：$<span class="arithmatex">\(L^{CLIP}(\theta) = \mathbb{E} \left[ \min( r_t(\theta) \hat{A}_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) \hat{A}_t ) \right]\)</span>$</p>
+<h3 id="132">13.2 截断机制</h3>
+<p>公式里的 <span class="arithmatex">\(\epsilon\)</span> 是一个很小的超参数（通常设为 0.2）。这意味着我们希望 <span class="arithmatex">\(r_t(\theta)\)</span> 始终保持在 <span class="arithmatex">\([0.8, 1.2]\)</span> 之间。</p>
+<p>我们分两种情况来看:
+- 当 <span class="arithmatex">\(\hat{A}_t &gt; 0\)</span>（这个动作比预期好）：
+    - 我们的目标是提高这个动作的概率，所以 <span class="arithmatex">\(r_t(\theta)\)</span> 会变大。
+    - 但是，如果 <span class="arithmatex">\(r_t(\theta)\)</span> 增大到了 <span class="arithmatex">\(1 + \epsilon\)</span>（比如 1.2），clip 函数就会把它强行锁死在 1.2。
+    - 此时继续提高动作概率，目标函数的值不会再增加了（梯度变为 0）。这防止了我们因为一次偶然的好结果，就盲目地过度自信。
+- 当 <span class="arithmatex">\(\hat{A}_t &lt; 0\)</span>（这个动作比预期差）：
+    - 我们的目标是降低这个动作的概率，所以 <span class="arithmatex">\(r_t(\theta)\)</span> 会变小。
+    - 但是，如果 <span class="arithmatex">\(r_t(\theta)\)</span> 缩小到了 <span class="arithmatex">\(1 - \epsilon\)</span>（比如 0.8），clip 函数会把它强行锁死在 0.8。
+    - 此时继续压低动作概率，梯度同样会变成 0。这防止了我们因为一次失误，就彻底封杀掉某个动作（保留探索的可能性）。</p>
+<p>最绝妙的一点在于外层的min操作：如果新策略在优势为正时反而降低了概率，或者在优势为负时反而提高了概率（这叫作死），PPO是不截断的！它会提供极大的负梯度，狠狠地把策略拉回正轨。</p>
+<h3 id="133-ppo">13.3 PPO的完整形态</h3>
+<p>在实际工程中,PPO不仅是优化策略，它通常是一个包含了Actor和Critic的完整架构。它的总损失函数由三部分组成：
+$<span class="arithmatex">\(L^{TOTAL} = L^{CLIP} - c_1 L^{VF} + c_2 S[\pi_\theta]\)</span>$
+其中：
+- <span class="arithmatex">\(L^{CLIP}\)</span>：Actor 的策略更新损失（带截断，防止策略崩溃）。
+- <span class="arithmatex">\(L^{VF}\)</span>：Critic 的价值预估误差（Value Function Loss，通常是 MSE，让教练打分更准）。
+- <span class="arithmatex">\(S[\pi_\theta]\)</span>：策略的熵 (Entropy)。这是一个鼓励探索的惩罚项。熵越大，说明策略越随机；通过奖励高熵，PPO 能够防止模型过早地陷入局部最优（比如死磕某个看似稳妥的动作）。</p>
+<h1 id="rlhf">十二、RLHF</h1>
+<p>在前十一章的语境下，环境给智能体的奖励都是极其明确的：游戏里吃个金币 +1，掉下悬崖 -100，机器人往前走一米 +1。这些规则都可以写成确定的代码（Reward Function）。</p>
+<p>但在大语言模型的对话中，情况改变了:谁来告诉 PPO，模型生成的这句回答是“礼貌的”、“有逻辑的”还是“充满偏见的”？ 人类的价值观是高度主观且极其复杂的，根本无法用一段 if-else 代码来量化打分。</p>
+<p>这就引出了 OpenAI 开启 ChatGPT 革命的最关键拼图：RLHF (Reinforcement Learning from Human Feedback，基于人类反馈的强化学习)。它的核心思想极其惊艳：既然写不出奖励代码，那我们就用神经网络去拟合人类的审美.</p>
+<h2 id="14reward-model">14.Reward Model</h2>
+<h3 id="141">14.1核心思想</h3>
+<p>奖励模型的目标，就是代替人类坐在PPO旁边当裁判。它的输入是一个Prompt加上模型生成的Response，输出是一个代表人类偏好程度的实数标量。</p>
+<h3 id="142">14.2数据收集：排序</h3>
+<p>如果让标注员直接给回答打 0-10 分，会遇到极大的主观偏差：张三极其严格，最高只给 7 分；李四比较宽容，起步就是 8 分。这种绝对分数的噪声太大。</p>
+<p>所以，RLHF 采用了成对比较（Pairwise Comparison）：给定一个 Prompt <span class="arithmatex">\(x\)</span>，让模型生成两个不同的回答 <span class="arithmatex">\(y_1\)</span> 和 <span class="arithmatex">\(y_2\)</span>。让人类标注员只做一件事：选出哪个更好。假设人类选择了 <span class="arithmatex">\(y_w\)</span>（赢家），放弃了 <span class="arithmatex">\(y_l\)</span>（输家）。</p>
+<h3 id="143bradley-terry">14.3数学建模：Bradley-Terry模型</h3>
+<p>我们如何把人类的这种“二选一”转化为神经网络的损失函数？这里借用了统计学中著名的 Bradley-Terry 模型。</p>
+<p>我们假设，回答 <span class="arithmatex">\(y_w\)</span> 战胜 <span class="arithmatex">\(y_l\)</span> 的概率，是由它们在 RM 中得分差异的 Sigmoid 函数决定的：
+$<span class="arithmatex">\(P(y_w \succ y_l \vert{} x) = \sigma(R_\phi(x, y_w) - R_\phi(x, y_l))\)</span>$
+其中，<span class="arithmatex">\(R_\phi\)</span> 就是我们要训练的奖励模型。</p>
+<p>为了让这个概率最大化，我们去对数并加负号，就得到了及其经典的 RM 损失函数：</p>
+<div class="arithmatex">\[L_{RM}(\phi) = - \mathbb{E}_{(x, y_w, y_l)} \left[ \log \sigma \left( R_\phi(x, y_w) - R_\phi(x, y_l) \right) \right]\]</div>
+<p>通过最小化这个 Loss，RM 就能学会拉大“好回答”和“坏回答”的分数差，从而完美地把人类的主观审美，蒸馏成了一个可以无限次极速调用的数学裁判。</p>
+<h2 id="15ppo-based-rlhf">15.PPO-based RLHF</h2>
+<h3 id="151-kl">15.1 奖励作弊与KL惩罚</h3>
+<p>如果我们仅仅使用 RM 的分数作为奖励让 PPO 去优化，很快就会发生强化学习里最经典的灾难：Reward Hacking（奖励作弊）。</p>
+<p>因为 RM 本质上也是个神经网络，它肯定有漏洞。PPO 作为一个极其强大的寻优算法，很快就会发现：“只要我疯狂输出某些毫无意义的特定词汇，RM 就会给我打出极高的异常分数！” 最终，你的 LLM 会输出一堆人类看不懂的火星文，但在 RM 那里却拿了满分。</p>
+<p>为了防止 LLM 走火入魔，研究人员在最终的奖励计算中，引入了一个极其关键的锚定机制：KL 散度惩罚 (KL Penalty)。</p>
+<p>$<span class="arithmatex">\(R_{total}(x, y) = R_\phi(x, y) - \beta D_{KL} \left( \pi_\theta^{RL}(y\vert{}x) \parallel \pi^{SFT}(y\vert{}x) \right)\)</span>$
+- <span class="arithmatex">\(\pi_\theta^{RL}\)</span> 是正在用 PPO 更新的模型。
+- <span class="arithmatex">\(\pi^{SFT}\)</span> 是强化学习开始前的初始模型（冻结参数）。
+- <span class="arithmatex">\(\beta\)</span> 是惩罚系数。</p>
+<p>物理意义： 我们不仅要求模型拿到 RM 的高分，同时还严厉要求它：你的输出概率分布，绝对不能偏离初始的正常人类语言模型太远！ 只要你敢说火星文，KL 散度就会疯狂变大，扣光你的分数。</p>
+<p>RLHF+PPO的这套架构虽然及其强大,但它的工程实现却开销极大。为了训练一个LLM，需要同时训练四个超大模型：Actor Model、Refrence Model（用来算 KL 惩罚的 SFT 初始模型）、Reward Model、Critic Model(PPO 计算优势函数 GAE 需要的价值模型)</p>
+<h3 id="152-ppo">15.2 PPO算法的全流程</h3>
+<p>现在，我们把 Actor（演员）、Reference（参考模型，防止乱说话）、Reward（考官）和 Critic（教练）全部放进显存。以下是 PPO 对齐大模型时，一个完整迭代周期的严密运转序列：</p>
+<ul>
+<li>
+<p>1.环境交互与采样 (Rollout)：系统给出一个 Prompt <span class="arithmatex">\(x\)</span>。Actor 模型（初始策略 <span class="arithmatex">\(\pi_\theta\)</span>）开始逐个预测 Token，直到生成完整的回答 <span class="arithmatex">\(y\)</span>。在这个过程中，记录下每一步的状态 <span class="arithmatex">\(s_t\)</span>（已经生成的上文）、动作 <span class="arithmatex">\(a_t\)</span>（生成的 Token）以及对应的概率分布。</p>
+</li>
+<li>
+<p>2.计算最终奖励与惩罚 (Reward &amp; KL Penalty)，生成结束后，进行结算：</p>
+<ul>
+<li>考官打分： 将完整的 <span class="arithmatex">\((x, y)\)</span> 喂给冻结的 Reward Model，得到一个偏好标量得分 <span class="arithmatex">\(R\)</span>。</li>
+<li>紧箍咒惩罚： 针对 Actor 生成的每一个 Token，让冻结的 Reference Model 也算一遍概率。计算 Actor 概率和 Reference 概率的 KL 散度。</li>
+<li>融合： 将 RM 的得分与 KL 惩罚结合，得到最终每个时刻的真实奖励信号 <span class="arithmatex">\(r_t\)</span>（通常只有最后一个 Token 有 RM 得分，中间 Token 只有负的 KL 惩罚）。</li>
+</ul>
+</li>
+<li>3.优势函数估计 (GAE 结算)：此时，Critic（价值模型） 登场。Critic 接收刚才记录的轨迹状态 <span class="arithmatex">\(s_t\)</span>，输出每个步骤的预测价值 <span class="arithmatex">\(V(s_t)\)</span> 和 <span class="arithmatex">\(V(s_{t+1})\)</span>。利用真实的奖励 <span class="arithmatex">\(r_t\)</span> 和 Critic 的预测值，计算出单步 TD 误差 <span class="arithmatex">\(\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)\)</span>。然后，利用我们第九章学过的 GAE 公式，反向递推算出所有步骤的综合优势估值 <span class="arithmatex">\(\hat{A}_t\)</span>。</li>
+<li>4.截断更新 (PPO Update)，这是 PPO 的核心数学步骤：<ul>
+<li>Actor 更新： 计算新旧策略的概率比值 <span class="arithmatex">\(r_t(\theta)\)</span>，将其与 <span class="arithmatex">\(\hat{A}_t\)</span> 相乘，并套用 clip 函数限制在 <span class="arithmatex">\([0.8, 1.2]\)</span> 之间。顺着梯度的方向更新 Actor 参数，让它更倾向于生成高优势的 Token。</li>
+<li>Critic 更新：把计算出的真实期望回报 (Return) 作为 Target，用均方误差 (MSE) 更新 Critic 自己的参数，让它下一次“预测未来”时更准。</li>
+</ul>
+</li>
+<li>5.经验丢弃与循环 (Loop)：因为 PPO 是 On-policy 算法，利用这批数据更新完 Actor 和 Critic 后，这些数据就“过期”了，必须彻底丢弃。模型带着更新后的新参数，回到 Step 1，抽取新的 Prompt 重新开始生成，周而复始，直到收敛。</li>
+</ul>
+<h1 id="grpo">十三、GRPO</h1>
+<h2 id="16grpo">16.GRPO</h2>
+<p>在上一章的结尾我们提到，标准 PPO 在进行 RLHF 时，显存里需要同时塞下 Actor、Reference、Reward 和 Critic 四个庞大的模型。对于动辄几百亿甚至上千亿参数的大模型来说，Critic 模型（价值网络）不仅极其占用显存，而且因为生成任务的稀疏奖励特性，Critic 往往很难训练准。</p>
+<p>GRPO 的出现，用一种极其巧妙的统计学思维，直接挥刀砍掉了 Critic 模型，完成了一次优雅的“架构瘦身”。</p>
+<h3 id="161">16.1 核心思想</h3>
+<p>在PPO中，Critic模型的作用是为了算优势函数。Critic会努力给当前状态估算一个基准分V(s),然后用真实的奖励去减它，如果比预期好，优势就是正的，比预期差，优势就是负的。</p>
+<p>GRPO提出了一个灵魂拷问：我们真的需要一个复杂的神经网络去硬背这个基准分吗？既然我们关心的是“相对好坏”，那对于同一个问题（Prompt），我让 Actor 模型一口气生成 <span class="arithmatex">\(G\)</span> 个不同的回答，然后把这 <span class="arithmatex">\(G\)</span> 个回答的得分拉出来互相比较，不就知道谁好谁坏了吗？</p>
+<h3 id="162-grpo">16.2 GRPO的运转机制</h3>
+<p>GRPO 彻底抛弃了 Critic 预测基准的思路，采用了组内相对评分 (Group Relative Scoring)。它的流程极其简洁直观：
+- 分组采样 (Group Sampling)： 给定一个输入提示词 <span class="arithmatex">\(x\)</span>，让当前的 Actor 模型独立生成一组共 <span class="arithmatex">\(G\)</span> 个回答（比如 <span class="arithmatex">\(G=4\)</span> 或 <span class="arithmatex">\(8\)</span>）：<span class="arithmatex">\(\{y_1, y_2, \dots, y_G\}\)</span>。
+- 外部打分 (Reward Evaluation)： 把这 <span class="arithmatex">\(G\)</span> 个回答交给奖励模型（RM）或者基于规则的校验器（比如数学答案验证器），得到一组绝对得分：<span class="arithmatex">\(\{r_1, r_2, \dots, r_G\}\)</span>。
+- 计算组内优势 (Relative Advantage)： 直接对这组得分进行标准归一化处理。算出得分的均值 <span class="arithmatex">\(\mu_r\)</span> 和标准差 <span class="arithmatex">\(\sigma_r\)</span>，然后把每个回答的得分转化为标准分：$<span class="arithmatex">\(\hat{A}_i = \frac{r_i - \mu_r}{\sigma_r}\)</span>$这个 <span class="arithmatex">\(\hat{A}_i\)</span> 就是极其完美的优势信号！高于平均分的回答，<span class="arithmatex">\(\hat{A}_i\)</span> 自动为正；低于平均分的回答，<span class="arithmatex">\(\hat{A}_i\)</span> 自动为负。我们用极其廉价的样本统计量，完美替代了 Critic 那个难以训练的神经网络基准。</p>
+<h3 id="163">16.3数学表达</h3>
+<p>拿到了 <span class="arithmatex">\(\hat{A}_i\)</span> 之后，剩下的事情就回到了我们最熟悉的 PPO 截断逻辑。GRPO 的目标函数 <span class="arithmatex">\(J_{GRPO}(\theta)\)</span> 如下：$<span class="arithmatex">\(J_{GRPO}(\theta) = \mathbb{E}_{x \sim P, \{y_i\}_{i=1}^G \sim \pi_{\theta_{old}}} \left[ \frac{1}{G} \sum_{i=1}^G \left( \min \left( \rho_i(\theta) \hat{A}_i, \text{clip}(\rho_i(\theta), 1-\epsilon, 1+\epsilon) \hat{A}_i \right) - \beta \mathbb{D}_{KL}(\pi_\theta \vert{}\vert{} \pi_{ref}) \right) \right]\)</span><span class="arithmatex">\(其中：\)</span>\rho_i(\theta) = \frac{\pi_\theta(y_i\vert{}x)}{\pi_{\theta_{old}}(y_i\vert{}x)}$ 是新旧策略的概率比值。后面那项 <span class="arithmatex">\(\beta \mathbb{D}_{KL}\)</span> 依然是用来防止模型“走火入魔”偏离初始参考模型（Reference Model）的 KL 惩罚。</p>
+<h3 id="164-grpo">16.4 GRPO为什么强大？</h3>
+<ul>
+<li>
+<p>显存的绝对解放： 直接砍掉了等参数量的 Critic 模型。如果在 70B 模型上训练，这意味着直接节省了几十甚至上百 GB 的显存开销，极大地降低了 RL 训练的硬件门槛。</p>
+</li>
+<li>
+<p>训练极其稳定： 在数学推理、代码生成等逻辑严密的任务中，Critic 很难精准预测到一个长序列在最后究竟能不能算对。GRPO 放弃了猜测，直接用真实的采样均值做对比，彻底消除了 Critic 预估偏差带来的方差震荡。</p>
+</li>
+<li>
+<p>天然契合思维链 (CoT)： 对于当前大火的复杂推理过程（Chain-of-Thought），同一个问题本来就有很多种不同的解题路径。GRPO 让模型自己生成多种解法并内部“赛马”，完美契合了通过多路径采样提升推理能力的底层逻辑。</p>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+<h2 id="__comments">评论区</h2>
+<script src="https://giscus.app/client.js" data-repo="younginger/learning-blog" data-repo-id="R_kgDORHR0yw" data-category="General" data-category-id="DIC_kwDORHR0y84C1zJL" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="preferred_color_scheme" data-lang="zh-CN" crossorigin="anonymous" async="">
+</script>
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>
