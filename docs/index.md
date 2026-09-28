@@ -30,7 +30,19 @@ hide:
     <div class="carousel-slide">
         <img src="assets/images/banner6.jpg" alt="Project 6">
     </div>
+    <div class="carousel-slide">
+        <img src="assets/images/photo1.jpg" alt="Photography 1">
     </div>
+    <div class="carousel-slide">
+        <img src="assets/images/photo2.jpg" alt="Photography 2">
+    </div>
+    <div class="carousel-slide">
+        <img src="assets/images/photo3.jpg" alt="Photography 3">
+    </div>
+    <div class="carousel-slide">
+        <img src="assets/images/photo4.jpg" alt="Photography 4">
+    </div>
+</div>
 
 
 <h2>内容</h2>
