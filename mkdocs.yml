@@ -34,7 +34,7 @@ nav:
   - 首页: index.md
   - 学习笔记:
       - 扩散模型: diffusion-study.md
-      - 世界模型: World_Model.md
+      - 世界模型: World_Models.md
       - 大模型: llm-study.md
       - 强化学习: RL.md
       - 医学图像: medical-ai.md  # 占位，稍后创建
