@@ -1,4 +1,4 @@
-# <center>World Models</center>
+# World Models
 # 1.奠基之作World Models（2018）
 第一章我们将聚焦于 World Models (2018) 的奠基之作。整个世界模型由三个组件（V、M、C）构成，而第一步，我们需要为智能体装上“眼睛”——也就是 V 模型（Vision Model）。
 
