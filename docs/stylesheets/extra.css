@@ -139,34 +139,27 @@
     100% { opacity: 0; z-index: 1;}
 }
 
-/* --- 全局背景图设置 （有问题）--- */
 /* =======================================================
-   全局科幻背景（仅深色模式）
+   全局科幻背景与通透度调节（仅深色模式）
    ======================================================= */
 
-/* Material 的 data-md-color-scheme 挂在 body 上 */
+/* 1. 调整背景图遮罩：提高透明度不透明度，让底图更沉稳、不刺眼 */
 [data-md-color-scheme="slate"] .md-container::before {
-
     content: "";
-
     position: fixed;
-
     top: 0;
     left: 0;
-
     width: 100vw;
     height: 100vh;
-
+    /* 将 0.65 改为 0.85 甚至更高，背景就不会显得过于透光 */
     background:
         linear-gradient(
-            rgba(0,0,0,0.65),
-            rgba(0,0,0,0.65)
+            rgba(10, 10, 18, 0.88),
+            rgba(10, 10, 18, 0.88)
         ),
         url("../assets/images/bg.jpg");
-
     background-size: cover;
     background-position: center;
-
     z-index: 0;
     pointer-events: none;
 }
@@ -180,67 +173,52 @@
     z-index: 1;
 }
 
-
-/* 让 Material 默认背景透明 */
+/* 让默认的容器背景彻底透明，透出最底层的背景图 */
 body[data-md-color-scheme="slate"] .md-main,
+body[data-md-color-scheme="slate"] .md-main__inner,
 body[data-md-color-scheme="slate"] .md-container {
     background: transparent !important;
 }
 
-
-/* 内容区域增加磨砂玻璃效果 */
-body[data-md-color-scheme="slate"] .md-content {
-    background: rgba(10, 10, 18, 0.75);
-    backdrop-filter: blur(6px);
-    border-radius: 12px;
-    padding: 1rem;
+/* 2. 去除正文区域的大黑色矩形框 */
+body[data-md-color-scheme="slate"] .md-content,
+body[data-md-color-scheme="slate"] .md-content__inner {
+    background: transparent !important; /* 移除整块背景遮罩 */
+    backdrop-filter: none !important;
+    border-radius: 0;
+    padding: 0;
 }
 
-
-/* 侧边栏透明 */
-body[data-md-color-scheme="slate"] .md-sidebar__scrollwrap {
-    background: rgba(10, 10, 18, 0.75);
-    backdrop-filter: blur(6px);
-}
-
-
-/* 顶部导航栏透明 */
+/* 3. 修复顶部导航（Tabs 标签栏：首页、学习笔记等）在夜间不可见的问题 */
 body[data-md-color-scheme="slate"] .md-header {
-    background: rgba(10, 10, 18, 0.85);
+    background: rgba(10, 10, 18, 0.9) !important;
     backdrop-filter: blur(10px);
 }
 
+body[data-md-color-scheme="slate"] .md-tabs {
+    background: rgba(10, 10, 18, 0.9) !important;
+}
 
-/* 页脚透明 */
+/* 强制提升顶部导航标签文字的可见度与对比度 */
+body[data-md-color-scheme="slate"] .md-tabs__link {
+    color: rgba(255, 255, 255, 0.75) !important;
+    opacity: 1 !important;
+}
+
+/* 鼠标悬浮和选中标签时呈现青色霓虹高亮 */
+body[data-md-color-scheme="slate"] .md-tabs__link:hover,
+body[data-md-color-scheme="slate"] .md-tabs__item--active .md-tabs__link {
+    color: var(--neon-cyan) !important;
+    text-shadow: 0 0 8px var(--neon-cyan);
+}
+
+/* 4. 侧边栏与页脚样式微调 */
+body[data-md-color-scheme="slate"] .md-sidebar__scrollwrap {
+    background: rgba(10, 10, 18, 0.6);
+    backdrop-filter: blur(6px);
+    border-radius: 8px;
+}
+
 body[data-md-color-scheme="slate"] .md-footer {
-    background: rgba(10, 10, 18, 0.85);
+    background: rgba(10, 10, 18, 0.95);
 }
-
-/* --- 摄影页面图片网格 --- */
-.photo-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
-    margin: 2rem 0;
-}
-
-.photo-item {
-    display: block;
-    aspect-ratio: 4 / 3;
-    overflow: hidden;
-    border: 1px solid var(--neon-cyan);
-    background: #000;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.photo-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 0 18px rgba(0, 255, 242, 0.45);
-}
-
-.photo-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
