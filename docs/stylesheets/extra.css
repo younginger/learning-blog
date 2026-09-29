@@ -174,15 +174,15 @@
 }
 
 /* 让默认的容器背景彻底透明，透出最底层的背景图 */
-body[data-md-color-scheme="slate"] .md-main,
-body[data-md-color-scheme="slate"] .md-main__inner,
-body[data-md-color-scheme="slate"] .md-container {
+html[data-md-color-scheme="slate"] .md-main,
+html[data-md-color-scheme="slate"] .md-main__inner,
+html[data-md-color-scheme="slate"] .md-container {
     background: transparent !important;
 }
 
 /* 2. 去除正文区域的大黑色矩形框 */
-body[data-md-color-scheme="slate"] .md-content,
-body[data-md-color-scheme="slate"] .md-content__inner {
+html[data-md-color-scheme="slate"] .md-content,
+html[data-md-color-scheme="slate"] .md-content__inner {
     background: transparent !important; /* 移除整块背景遮罩 */
     backdrop-filter: none !important;
     border-radius: 0;
@@ -190,35 +190,39 @@ body[data-md-color-scheme="slate"] .md-content__inner {
 }
 
 /* 3. 修复顶部导航（Tabs 标签栏：首页、学习笔记等）在夜间不可见的问题 */
-body[data-md-color-scheme="slate"] .md-header {
+html[data-md-color-scheme="slate"] .md-header {
     background: rgba(10, 10, 18, 0.9) !important;
     backdrop-filter: blur(10px);
 }
 
-body[data-md-color-scheme="slate"] .md-tabs {
+html[data-md-color-scheme="slate"] .md-tabs {
     background: rgba(10, 10, 18, 0.9) !important;
 }
 
 /* 强制提升顶部导航标签文字的可见度与对比度 */
-body[data-md-color-scheme="slate"] .md-tabs__link {
+html[data-md-color-scheme="slate"] .md-tabs__link {
     color: rgba(255, 255, 255, 0.75) !important;
     opacity: 1 !important;
 }
 
 /* 鼠标悬浮和选中标签时呈现青色霓虹高亮 */
-body[data-md-color-scheme="slate"] .md-tabs__link:hover,
-body[data-md-color-scheme="slate"] .md-tabs__item--active .md-tabs__link {
+html[data-md-color-scheme="slate"] .md-tabs__link:hover,
+html[data-md-color-scheme="slate"] .md-tabs__item--active .md-tabs__link {
     color: var(--neon-cyan) !important;
     text-shadow: 0 0 8px var(--neon-cyan);
 }
 
 /* 4. 侧边栏与页脚样式微调 */
-body[data-md-color-scheme="slate"] .md-sidebar__scrollwrap {
-    background: rgba(10, 10, 18, 0.6);
+html[data-md-color-scheme="slate"] .md-sidebar__scrollwrap {
+    background: transparent;
     backdrop-filter: blur(6px);
     border-radius: 8px;
 }
 
-body[data-md-color-scheme="slate"] .md-footer {
+html[data-md-color-scheme="slate"] .md-sidebar {
+    background: transparent;
+}
+
+html[data-md-color-scheme="slate"] .md-footer {
     background: rgba(10, 10, 18, 0.95);
 }
