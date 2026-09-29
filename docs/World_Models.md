@@ -494,6 +494,7 @@ def evaluate_controller_in_dream(weights, m_model, controller, max_steps=1000, t
 
 - 长程预测崩溃：RNN 的误差会随着时间步累积，梦境时间一长，预测的画面就会变成一团模糊的噪点。
 - 进化算法的极限：CMA-ES 虽然避开了梯度爆炸，但采样效率极低，且无法优化成百上千万参数的庞大策略网络。
+
 Dreamer通过引入RSSM(Recurrent State Space Model，循环状态空间模型)和可微解析梯度 (Analytic Gradients) 彻底解决了这两个问题。
 
 ## 2.1 RSSM（循环状态空间模型）
@@ -505,3 +506,106 @@ RSSM 的核心思想是将世界的状态拆分为“确定性 (Deterministic)�
 - 随机性状态 ($z_t$)：由多层感知机 (MLP) 生成的高斯分布（或离散分布）。它专门负责吸收环境中的不可预测因素（比如路面的微小颠簸、风向的变化）。
 
 在RSSM中，每一步的状态推演被严密地划分为三个子模型
+
+- 确定性序列模型(Deterministic State Model)：更新确定性状态。基于上一步的确定性状态 $h_{t-1}$、上一步的随机状态 $z_{t-1}$ 和动作 $a_{t-1}$。
+
+$$h_t = \text{GRU}(h_{t-1}, [z_{t-1}, a_{t-1}])$$
+- 先验动力学模型 (Prior / Transition Model - 梦境预测)：这是智能体在梦中预测未来的模型。它不看真实画面，只根据当前的确定性记忆 $h_t$，预测出一个随机状态的分布。
+
+$$\hat{z}_t \sim p(\cdot \vert h_t)$$
+- 后验表征模型 (Posterior / Representation Model - 现实校准)：这是智能体在训练时，结合了环境真实画面特征 $x_t$（V模型的输出）后，得出的包含全部信息的随机状态分布。它负责在现实中修正先验模型的猜测。
+
+$$z_t \sim q(\cdot \vert h_t, x_t)$$
+
+关于损失部分，除了要求解码器能从 $(h_t, z_t)$ 重构出原始画面和奖励外，RSSM 强迫先验分布 $p$ 去尽可能逼近后验分布 $q$。数学上就是最小化它们之间的 KL 散度：$D_{KL}(q \Vert p)$。
+只要 $p$ 学得足够像 $q$，在脱离了真实画面的梦境中，$p$ 就能完美地代班，生成极其逼真的隐状态。
+
+## 2.2 Actor-Critic 与可微梦境 (Differentiable Dream)
+有了 RSSM 提供的稳定且高度准确的梦境，Dreamer 放弃了笨拙的 CMA-ES 进化算法，转而使用了 Actor-Critic (演员-评论家) 架构。
+
+为什么RSSM科研使用RL?因为 RSSM 的推演过程（包括从高斯分布中采样 $z_t$ 的重参数化技巧）是全程可微的。
+
+在 Dreamer 的梦中：
+
+- Actor (策略网络) 根据当前状态输出动作。
+- RSSM 推演下一步状态，并预测下一步能拿多少奖励 $r_t$。
+- Critic (价值网络) 预估未来的长期总收益 $V(s)$。
+
+更重要的是，由于这些神经网络是可微的，加上梦境采样的特性，Dreamer 的采样效率远高于传统强化学习。
+
+## 2.3RSSM代码实现
+在代码中，我们将使用 GRUCell 作为确定性状态的更新器。随机状态则使用普通的 MLP 输出均值和对数方差来构建高斯分布。
+
+```Python
+import torch
+import torch.nn as nn
+import torch.distributions as D
+import torch.nn.functional as F
+
+class RSSM(nn.Module):
+    def __init__(self,action_dim=3,hidden_dim=256,state_dim=32,embed_dim=256):
+        super(RSSM,self).__init__()
+        self.hidden_dim = hidden_dim # h_t: 确定性状态维度 (e.g., GRU 隐藏层 256)
+        self.state_dim = state_dim   # z_t: 随机状态维度 (e.g., 32 维高斯分布)
+
+        # 1.Deterministic State Model(确定性模型)
+        # 输入是 [z_{t-1}, a_{t-1}]，经过一个线性层融合特征，然后送入 GRU
+        self.fc_gru_input = nn.Linear(state_dim + action_dim, hidden_dim)
+        self.gru_cell = nn.GRUCell(hidden_dim, hidden_dim)
+
+        # 2. Prior Model (先验模型 - 梦中预测未来)
+        # 仅根据当前的 h_t 预测下一个 z_t 的分布 (输出均值和对数方差)
+        self.prior_mlp1 = nn.Linear(hidden_dim, hidden_dim)
+        self.prior_mu = nn.Linear(hidden_dim, state_dim)
+        self.prior_logvar = nn.Linear(hidden_dim, state_dim)
+
+        # 3. Posterior Model (后验模型 - 结合真实视觉特征校准)
+        # 结合当前的 h_t 和环境真实画面提取出的特征 x_t
+        self.post_mlp1 = nn.Linear(hidden_dim + embed_dim, hidden_dim)
+        self.post_mu = nn.Linear(hidden_dim, state_dim)
+        self.post_logvar = nn.Linear(hidden_dim, state_dim)
+
+    def step_prior(self, prev_state, prev_action, prev_hidden):
+        """
+        推演一次梦境 (Prior Step)
+        在梦境中，我们没有真实画面，纯靠网络推演
+        """
+        # 计算 GRU 的输入
+        gru_in = F.relu(self.fc_gru_input(torch.cat([prev_state, prev_action], dim=-1)))
+        
+        # 1. 更新确定性状态 h_t
+        next_hidden = self.gru_cell(gru_in, prev_hidden)
+        
+        # 2. 预测先验随机状态的分布参数
+        prior_x = F.relu(self.prior_mlp1(next_hidden))
+        prior_mu = self.prior_mu(prior_x)
+        prior_logvar = self.prior_logvar(prior_x)
+        
+        # 3. 使用重参数化技巧采样 z_t (保证梯度贯通)
+        std = torch.exp(0.5 * prior_logvar)
+        eps = torch.randn_like(std)
+        next_state = prior_mu + eps * std
+        
+        return next_state, next_hidden, prior_mu, prior_logvar
+
+    def step_posterior(self, prev_state, prev_action, prev_hidden, obs_embed):
+        """
+        推演一次现实校准 (Posterior Step)
+        在训练时使用，结合真实画面的特征 obs_embed (V 模型的输出)
+        """
+        # 1. 先用 Prior Model 走一遍 (更新 h_t 并拿到先验预测，为计算 KL loss 准备)
+        _, next_hidden, prior_mu, prior_logvar = self.step_prior(prev_state, prev_action, prev_hidden)
+        
+        # 2. 结合真实画面特征进行后验预测
+        post_x = torch.cat([next_hidden, obs_embed], dim=-1)
+        post_x = F.relu(self.post_mlp1(post_x))
+        post_mu = self.post_mu(post_x)
+        post_logvar = self.post_logvar(post_x)
+        
+        # 3. 采样真正的后验状态 z_t
+        std = torch.exp(0.5 * post_logvar)
+        eps = torch.randn_like(std)
+        next_state = post_mu + eps * std
+        
+        return next_state, next_hidden, post_mu, post_logvar, prior_mu, prior_logvar
+```
