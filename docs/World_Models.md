@@ -510,9 +510,11 @@ RSSM 的核心思想是将世界的状态拆分为“确定性 (Deterministic)�
 - 确定性序列模型(Deterministic State Model)：更新确定性状态。基于上一步的确定性状态 $h_{t-1}$、上一步的随机状态 $z_{t-1}$ 和动作 $a_{t-1}$。
 
 $$h_t = \text{GRU}(h_{t-1}, [z_{t-1}, a_{t-1}])$$
+
 - 先验动力学模型 (Prior / Transition Model - 梦境预测)：这是智能体在梦中预测未来的模型。它不看真实画面，只根据当前的确定性记忆 $h_t$，预测出一个随机状态的分布。
 
 $$\hat{z}_t \sim p(\cdot \vert h_t)$$
+
 - 后验表征模型 (Posterior / Representation Model - 现实校准)：这是智能体在训练时，结合了环境真实画面特征 $x_t$（V模型的输出）后，得出的包含全部信息的随机状态分布。它负责在现实中修正先验模型的猜测。
 
 $$z_t \sim q(\cdot \vert h_t, x_t)$$
@@ -523,7 +525,7 @@ $$z_t \sim q(\cdot \vert h_t, x_t)$$
 ## 2.2 Actor-Critic 与可微梦境 (Differentiable Dream)
 有了 RSSM 提供的稳定且高度准确的梦境，Dreamer 放弃了笨拙的 CMA-ES 进化算法，转而使用了 Actor-Critic (演员-评论家) 架构。
 
-为什么RSSM科研使用RL?因为 RSSM 的推演过程（包括从高斯分布中采样 $z_t$ 的重参数化技巧）是全程可微的。
+为什么RSSM可以使用RL?因为 RSSM 的推演过程（包括从高斯分布中采样 $z_t$ 的重参数化技巧）是全程可微的。
 
 在 Dreamer 的梦中：
 

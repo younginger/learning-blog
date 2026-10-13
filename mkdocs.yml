@@ -2,32 +2,38 @@ site_name: younginger 的摸鱼手册
 site_url: https://younginger.github.io/learning-blog/
 repo_url: https://github.com/younginger/learning-blog
 repo_name: GitHub
-# 引入 Google 字体 (Orbitron 是一个很经典的科幻字体)
+site_description: Younginger 的个人笔记与生活影像，记录 AI 学习、科研探索和日常。
+copyright: © Younginger · 保持好奇，慢慢向前。
 extra_css:
-  - https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap
-  - stylesheets/extra.css  # 我们即将创建的自定义样式表
+  - stylesheets/extra.css
 theme:
   name: material
+  language: zh
+  font: false
   custom_dir: overrides
   features:
     - navigation.tabs        # 顶部导航栏
     - navigation.sections    # 侧边栏分组
-    - toc.integrate          # 目录集成在侧边栏
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - toc.follow
     - content.code.copy      # 代码复制按钮
   # 🎨 视觉配色：添加深色模式切换按钮
   palette: 
     - scheme: default
       primary: teal          # 主题色：青色
-      accent: purple         # 强调色：紫色
+      accent: green
       toggle:
         icon: material/brightness-7
-        name: Switch to dark mode
+        name: 切换到夜间模式
     - scheme: slate          # 深色模式
       primary: teal
-      accent: lime
+      accent: green
       toggle:
         icon: material/brightness-4
-        name: Switch to light mode
+        name: 切换到日间模式
 
 # 🗺️ 导航结构（这是新增的核心部分）
 nav:
@@ -40,7 +46,7 @@ nav:
       - 医学图像: medical-ai.md  # 占位，稍后创建
   - 生活瞬间:                    # <--- 新增的分区
       - 热爱当下: photography.md
-      - 第九艺术: hobbies.md
+      - 第九艺术: fiction.md
   - 关于我: about.md             # 占位，稍后创建
 
 # 插件配置（保持不变）
@@ -57,6 +63,6 @@ plugins:
   - search    # 开启搜索功能
   - glightbox # 开启图片灯箱效果
 extra_javascript:
+  - javascripts/interactions.js
   - javascripts/mathjax.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
