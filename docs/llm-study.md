@@ -336,5 +336,118 @@ def pack_data(tokenized_docs,max_len):
     
     return packed_data
 ```
-### 2.3 LLM预训练的核心
+## 3.LLM预训练的核心
 预训练阶段，模型唯一的目标就是根据上文猜测下一个字是什么。
+### 3.1 自回归域交叉熵损失
+在mini-LLaMA中，我们最后经过了一个lm_head（Linear层），输出的维度是 (batch_size, seq_len, vocab_size)。这代表对于序列中的每一个位置，模型都给出了整个词表的概率分布（Logits）。
+
+如何计算模型猜得准不准？我们使用交叉熵损失 (Cross Entropy Loss)。假设当前词的真实下一个词是 $y_i$，模型预测出的对应概率分布为 $\hat{y}_i$，损失函数计算如下：$$Loss = - \frac{1}{N} \sum_{i=1}^{N} \log P(\hat{y}_i = y_i \vert{} x_{<i})$$ 在 PyTorch 中，这可以通过 F.cross_entropy 来实现。但需要注意：我们需要将形状展开，因为标准的交叉熵函数期望输入是二维的 (N, C)，目标是一维的 (N)。
+
+```python
+import torch.nn.functional as F
+
+def compute_loss(logits, targets):
+    # logits shape: (batch, seq_len, vocab_size)
+    # targets shape: (batch, seq_len)
+    
+    # 展平以便计算
+    logits = logits.view(-1, logits.size(-1)) # 变为 (batch * seq_len, vocab_size)
+    targets = targets.view(-1)                # 变为 (batch * seq_len)
+    
+    # ignore_index=-100 通常用于忽略 padding 带来的影响
+    loss = F.cross_entropy(logits, targets, ignore_index=-100)
+    return loss
+```
+
+### 3.2 学习率调度
+LLM训练的标配是Cosine Learning Rate Schedule with Warmup（带预热的余弦退火学习率）。
+
+- Warmup（预热）：在训练的前几千步，学习率从 0 线性增长到最大值。这段时间模型权重还是随机的，防止梯度更新过于剧烈。
+
+- Cosine Decay（余弦衰减）：达到最大值后，随着训练进行，学习率按照余弦曲线平滑下降，在训练末期变得极小，帮助模型在损失函数的谷底精细收敛。
+
+### 3.3混合精度训练
+在超大参数的模型中，FP32会导致显存瞬间爆炸，并且计算极其缓慢。所以我们引入了半精度计算（16-bit），而 LLM 界目前的绝对主流是 BF16 (Bfloat16)，而不是传统的FP16。
+- FP32 (单精度)：1位符号，8位指数，23位小数。
+
+- FP16 (半精度)：1位符号，5位指数，10位小数。（容易发生数值溢出 Overflow，因为最大只能表示 65504）。
+
+- BF16 (Brain Floating Point)：1位符号，8位指数，7位小数。
+
+在深度学习中，数值的范围（指数位）比数值的精度（小数位）重要得多！BF16 保留了和 FP32 完全一样的 8 位指数，这意味着它拥有和 FP32 相同的数值范围，对于极其容易产生极大数值的 Attention 机制和巨大梯度的 LLM 训练来说至关重要。
+
+思考 1：预训练阶段需要使用 KV Cache 吗？为什么？
+
+不需要。核心原因在于训练和推理的计算方式完全不同：
+- 推理阶段（需要 KV Cache）：模型是“一个字一个字”往外蹦的（串行自回归）。生成第 100 个字时，必须把前 99 个字的 K 和 V 重新算一遍，所以需要缓存来省时间。
+- 预训练阶段（不需要 KV Cache）：我们已经把整段话（比如 2048 个 token）一次性喂给了模型，配合 Causal Mask（因果掩码），GPU 会在一次前向传播中并行算出所有位置的 Attention 和 Loss，根本不存在“逐个生成、重复计算”的过程。而且训练时每走一步，模型权重 $W_k, W_v$ 都在更新，缓存下来的旧 K、V 也会立刻失效。
+
+思考 2：targets 应该怎么从原始数据里切出来匹配 x？
+
+核心原则是错位对齐（Shift by 1）：
+
+如果原始序列是 [1, 2, 3, 4, 5]（长度为 5）：
+
+- 输入 x 取前 4 个：[1, 2, 3, 4]（切片 [:, :-1]）
+
+- 标签 y (targets) 取后 4 个：[2, 3, 4, 5]（切片 [:, 1:]）
+
+这样 logits 和 targets 的形状就完全对齐了（都是长度 4）：
+
+- 位置 0：模型看到 [1] → 预测 2
+
+- 位置 1：模型看到 [1, 2] → 预测 3
+
+- 位置 2：模型看到 [1, 2, 3] → 预测 4
+
+- 位置 3：模型看到 [1, 2, 3, 4] → 预测 5
+
+(注：在实际工程的 Data Packing 中，如果模型上下文长度是 2048，我们通常会把每个 block 切成 2049 的长度，这样切完 x 和 y 后，输入模型的长度正好是完整的 2048。)
+
+```python
+import torch
+
+def training_step(model, token_seq, optimizer):
+    # 假设 token_seq 形状为 (batch_size, seq_len)，例如 tensor([[1, 2, 3, 4, 5]])
+    optimizer.zero_grad()
+    
+    # 1. 构造输入 x 和标签 y (使用切片操作，保留 batch 维度)
+    x = token_seq[:, :-1]  # 形状: (1, 4) -> [[1, 2, 3, 4]]
+    y = token_seq[:, 1:]   # 形状: (1, 4) -> [[2, 3, 4, 5]]
+    
+    # 2. 前向传播
+    # logits shape: (1, 4, vocab_size)
+    logits = model(x)
+    
+    # 3. 计算 Loss 
+    loss = compute_loss(logits, y)
+    
+    # 4. 反向传播与更新
+    loss.backward()
+    optimizer.step()
+    
+    return loss.item()
+```
+
+## 4.分布式训练与显存优化
+### 4.1显存
+训练时的显存占用主要分为两大块：静态显存（模型状态）和动态显存（激活值）。
+
+假设模型参数量为$\Psi$（比如 7B 即 $7 \times 10^9$），在目前最主流的 混合精度（BF16）+ AdamW 优化器 训练配置下，静态显存由以下三部分组成：
+- 模型参数 (Parameters)：前向和反向传播使用 BF16，每个参数占 2 字节 → $2\Psi$ 字节。
+- 梯度 (Gradients)：反向传播算出的梯度也是 BF16，每个参数占 2 字节 → $2\Psi$ 字节。
+- 优化器状态 (Optimizer States)：这是真正的“显存黑洞”。为了防止极小的梯度更新在 BF16 下精度丢失（Underflow），AdamW 内部必须用 FP32（4 字节） 维护三份状态：
+    - FP32 主权重副本 (Master Weights)：$4\Psi$ 字节
+    - 一阶动量 (Momentum, FP32)：$4\Psi$ 字节
+    - 二阶动量 (Variance, FP32)：$4\Psi$ 字节
+    - 优化器合计：$12\Psi$ 字节。
+把它们加起来，光是把模型静态放进显存准备训练，就需要：$$\text{静态显存} = 2\Psi + 2\Psi + 12\Psi = 16\Psi \text{ 字节}$$算一笔账：训练一个 7B 模型，仅静态显存就需要 $7 \times 16 = \mathbf{112\text{ GB}}$，这还不包括随batch_size和seq_len暴涨的激活值显存。
+### 4.2数据并行
+目前的训练一般都采取多卡并行的方式，最基础的分布式策略是DDP：
+- 做法：每张 GPU 上都完整复制一份模型（参数、梯度、优化器）。把一个大的 Batch 切成 $N$ 份，每张卡各算各的前向和反向传播。
+- 同步：算完梯度后，所有 GPU 通过 All-Reduce 通信把梯度求平均，然后每张卡各自用平均后的梯度更新权重。
+- 局限性：DDP 极大提升了训练速度，但完全不省显存！每张卡上依然存着一模一样的 $16\Psi$ 字节，存在巨大的显存冗余。
+
+### 4.3DeepSpeed ZeRO（Zero Redundancy Optimizer）
+既然 DDP 的痛点是“每张卡都存了重复的数据”，微软提出的 ZeRO（零冗余优化器） 思想非常直白：把这些重复的状态切分（Shard）开，平均摊到 $N$ 张 GPU 上，谁需要时再通过高速网络（如 NVLink）临时通信拿一下。
+
